@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methodology — How We Estimate Affordability | Housing Affordability Atlas</title>
+<meta name="description" content="How Housing Affordability Atlas estimates payments, income needed, affordability scores, and rent burden — the assumptions, the math, and what it does not know.">
+<link rel="canonical" href="https://mrboss302.github.io/housing-affordability-atlas/methodology/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Housing Affordability Atlas">
+<meta property="og:title" content="Methodology — How We Estimate Affordability | Housing Affordability Atlas">
+<meta property="og:description" content="How Housing Affordability Atlas estimates payments, income needed, affordability scores, and rent burden — the assumptions, the math, and what it does not know.">
+<meta property="og:url" content="https://mrboss302.github.io/housing-affordability-atlas/methodology/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://homepaymentatlas.com">
+<link rel="stylesheet" href="../assets/css/styles.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Housing Affordability Atlas","url":"https://mrboss302.github.io/housing-affordability-atlas/","description":"Explore where housing may still be affordable."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://mrboss302.github.io/housing-affordability-atlas/"},{"@type":"ListItem","position":2,"name":"Methodology","item":"https://mrboss302.github.io/housing-affordability-atlas/methodology/"}]}</script>
+<!-- Google AdSense loader (publisher ca-pub-3840656918521680). Enables AdSense site
+     verification and Auto Ads. Individual ad units stay as labeled placeholders
+     until you create units in AdSense and set their numeric slot IDs in ad(). -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3840656918521680" crossorigin="anonymous"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a><header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span>Housing Affordability Atlas</a>
+    <button class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
+      <a href="../map/index.html">Map</a>
+      <a href="../rankings/most-affordable-states/index.html">Rankings</a>
+      <a href="../income/75000/index.html">By income</a>
+      <a href="../methodology/index.html">Methodology</a>
+      <a href="../about/index.html">About</a>
+    </nav>
+  </div>
+</header><main id="main">
+  <div class="wrap narrow">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li aria-current="page">Methodology</li></ol></nav>
+    <h1>Methodology &amp; data sources</h1>
+    <p class="lede">This is a market-discovery tool built on public and research data with transparent,
+      editable assumptions. Here is exactly where the data comes from, how every number is produced, and
+      what we deliberately leave to a detailed calculator.</p>
+    <aside class="ad-slot ad-horizontal" aria-label="Advertisement">
+  <span class="ad-label">Advertisement</span>
+  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
+  <ins class="adsbygoogle" style="display:block"
+       data-ad-client="ca-pub-3840656918521680"
+       data-ad-slot="1111111111"
+       data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  -->
+  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
+</aside>
+
+    <h2>Data sources at a glance</h2>
+    <div class="table-wrap"><table class="data-table">
+      <caption class="table-caption">Where each field comes from and its current status.</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Source</th><th scope="col">Vintage</th><th scope="col">Status</th></tr></thead>
+      <tbody>
+        <tr><td>Home values (ZHVI: starter, mid, by bedroom)</td>
+            <td><a href="https://www.zillow.com/research/data/" rel="noopener">Zillow Research</a></td>
+            <td>2026-05</td>
+            <td><span class="status-dot" data-status="real"></span>real</td></tr><tr><td>Rent index (ZORI, state = median of city ZORI)</td>
+            <td><a href="https://www.zillow.com/research/data/" rel="noopener">Zillow Research</a></td>
+            <td>2026-05</td>
+            <td><span class="status-dot" data-status="derived"></span>derived</td></tr><tr><td>Median household income</td>
+            <td><a href="https://www.census.gov/programs-surveys/acs/" rel="noopener">U.S. Census Bureau, ACS 5-year</a></td>
+            <td>ACS 5-year 2023</td>
+            <td><span class="status-dot" data-status="real"></span>real</td></tr><tr><td>Inventory, price cuts, days to pending, market heat</td>
+            <td><a href="https://www.zillow.com/research/data/" rel="noopener">Zillow Research (planned)</a></td>
+            <td>—</td>
+            <td><span class="status-dot" data-status="pending"></span>pending</td></tr><tr><td>State &amp; county boundaries, FIPS codes</td>
+            <td><a href="https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html" rel="noopener">U.S. Census Bureau, Cartographic Boundary Files</a></td>
+            <td>2018</td>
+            <td><span class="status-dot" data-status="real"></span>real</td></tr><tr><td>Detailed mortgage/payment customization</td>
+            <td><a href="https://homepaymentatlas.com/" rel="noopener">Home Payment Atlas</a></td>
+            <td>—</td>
+            <td><span class="status-dot" data-status="external"></span>external</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Roles of each source</h2>
+    <p><strong>Zillow Research</strong> supplies housing-market texture: home values by tier (ZHVI
+      bottom/mid/top and by bedroom count) and the rent index (ZORI). We use only Zillow's aggregate
+      research datasets — never listings, photos, or individual property details — and Zillow does not
+      endorse this site. <strong>The U.S. Census Bureau</strong> is the backbone for official public-data
+      context: household income (ACS), population, FIPS codes, and the state/county geography that draws
+      the map. <strong>HUD Fair Market Rents</strong> can supplement rent where useful.
+      <strong>Home Payment Atlas</strong> is the destination for detailed mortgage and payment
+      customization — we link there rather than duplicating that math.</p>
+
+    <h2>Derived insights (not copied tables)</h2>
+    <p>We combine sources into original, directional signals: a <em>starter-home affordability score</em>
+      (Zillow bottom-tier value vs income), a <em>median-</em> and <em>family-home affordability score</em>
+      (mid-tier and 3-bedroom values), <em>rent-vs-income pressure</em> (ZORI vs income), and — on the
+      roadmap — a <em>Buyer Opportunity Score</em> and <em>price-cut opportunity</em> index. Our state rent
+      figure is itself derived: the median of Zillow city-level ZORI within each state.</p>
+
+    <h2>How the monthly payment is calculated</h2>
+    <p>We take the home value for the chosen tier, subtract a 10% down payment, and
+      amortize the loan at a 6.70% rate over 30 years for
+      principal &amp; interest. We add property tax (1.1%/yr of value), homeowners
+      insurance (0.45%/yr), and PMI (0.6%/yr of the loan when down
+      payment is under 20%).</p>
+    <h2>How income needed &amp; the affordability score are calculated</h2>
+    <p>Income needed scales the monthly payment so housing is about 28% of gross
+      income. The 0–100 score compares income with that income needed: a ratio of 0.4 or
+      below scores 0, 1.6 or above scores 100, linear in between.</p>
+
+    <h2>Market-signal layers (data roadmap)</h2>
+    <p>The Buyer Opportunity, Market Heat, and Price-cut layers depend on Zillow inventory, price-cut,
+      days-to-pending, and market-heat datasets that are not yet imported. Until then these layers show an
+      honest "data coming soon" state — we never publish placeholder market numbers.</p>
+
+    <h2>What this site does not know</h2>
+    <p>It does not know your credit, exact local tax rate, HOA dues, insurance quote, loan program, or the
+      rate you'll be offered. It is not a pre-approval and not advice. For any real decision, customize the
+      scenario on <a href="https://homepaymentatlas.com/" rel="noopener">Home Payment Atlas</a> and confirm with a lender.</p>
+    <h2>Customize on Home Payment Atlas</h2>
+    <p>Home Payment Atlas is the companion calculator for detailed mortgage math. Use the
+      <a href="https://homepaymentatlas.com/mortgage-calculator/index.html" rel="noopener">full mortgage calculator</a> to adjust every input, and
+      review the <a href="https://homepaymentatlas.com/methodology/index.html" rel="noopener">Home Payment Atlas methodology</a>.</p>
+    <section class="disclaimer" role="note">
+  <h2>About these estimates &amp; data sources</h2>
+  <p>Home values and rents reflect Zillow Research data (ZHVI and ZORI, 2026-05). Household income reflects U.S. Census ACS data. All figures are estimates for general comparison, not appraisals or quotes — confirm details before relying on them.</p>
+  <p class="source-line">Home values and rent: Zillow Research (ZHVI, ZORI), 2026-05. Geography and FIPS codes: U.S. Census Bureau (Cartographic Boundary Files). Household income: U.S. Census ACS. Detailed payment math: Home Payment Atlas. Zillow does not endorse this site.</p>
+  <p>Figures are educational estimates only and are <strong>not</strong> financial, legal, tax,
+  mortgage, or real-estate advice, and not a loan offer. Verify every number with lenders, agents,
+  tax authorities, and official sources. See our <a href="../methodology/index.html">methodology</a>
+  and <a href="../terms/index.html">terms &amp; disclaimer</a>.</p>
+</section>
+  </div></main><footer class="site-footer">
+  <div class="wrap foot-grid">
+    <div class="foot-col"><h2>Maps</h2><ul><li><a href="../map/index.html">Full affordability map</a></li><li><a href="../map/buying-affordability/index.html">Buying affordability</a></li><li><a href="../map/income-needed/index.html">Income needed</a></li><li><a href="../map/rent-burden/index.html">Rent burden</a></li></ul></div>
+    <div class="foot-col"><h2>Rankings</h2><ul><li><a href="../rankings/most-affordable-states/index.html">Most affordable states</a></li><li><a href="../rankings/most-affordable-places-to-buy/index.html">Most affordable places</a></li><li><a href="../rankings/lowest-income-needed/index.html">Lowest income needed</a></li><li><a href="../rankings/best-places-for-first-time-buyers/index.html">First-time buyers</a></li></ul></div>
+    <div class="foot-col"><h2>By income</h2><ul><li><a href="../income/50000/index.html">On $50,000</a></li><li><a href="../income/75000/index.html">On $75,000</a></li><li><a href="../income/100000/index.html">On $100,000</a></li><li><a href="../income/150000/index.html">On $150,000</a></li></ul></div>
+    <div class="foot-col"><h2>States</h2><ul><li><a href="../states/maryland/index.html">Maryland</a></li><li><a href="../states/virginia/index.html">Virginia</a></li><li><a href="../states/pennsylvania/index.html">Pennsylvania</a></li></ul></div>
+    <div class="foot-col"><h2>Site</h2><ul><li><a href="../about/index.html">About</a></li><li><a href="../methodology/index.html">Methodology</a></li><li><a href="../privacy/index.html">Privacy</a></li><li><a href="../terms/index.html">Terms & disclaimer</a></li></ul></div>
+  </div>
+  <div class="wrap foot-base">
+    <p class="foot-atlas">Detailed mortgage and payment math lives on our companion site,
+      <a href="https://homepaymentatlas.com/" rel="noopener">Home Payment Atlas</a>.</p>
+    <p class="foot-atlas-src">Home values &amp; rent: Zillow Research. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
+    <p class="foot-legal">&copy; <span data-year>2026</span> Housing Affordability Atlas. Educational estimates only — not financial, legal, tax, mortgage, or real-estate advice. Verify with official sources.</p>
+  </div>
+</footer>
+<script src="../assets/js/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Dependencies / build scratch
+node_modules/
+_site/
+
+# Zillow source CSVs (large; downloaded fresh by CI, never committed)
+csv/
+
+# Census cartographic source shapefiles (only needed to regenerate us-geo.js)
+cb_2018_us_*/
+
+# Intermediate geometry export (us-geo.js is the committed product)
+assets/data/*.geojson
+
+# OS / editor cruft
+.DS_Store
+*.log

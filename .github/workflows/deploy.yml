@@ -1,0 +1,97 @@
+name: Build and deploy to GitHub Pages
+
+# Builds the static site and deploys it to GitHub Pages.
+#  - push to main / manual run  → build from committed data and deploy
+#  - monthly (17th, after Zillow's ~16th update) → refresh Zillow + Census data,
+#    regenerate, commit the refreshed data/pages back, then deploy.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 17 * *" # 07:00 UTC on the 17th of each month
+
+# Pages deploy needs pages/id-token; contents:write lets scheduled runs commit data.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # Public origin for canonicals, OG tags, sitemap, robots.txt, ads.txt.
+  # Change this to a custom domain when one is added (and add a CNAME step).
+  SITE_URL: https://mrboss302.github.io/housing-affordability-atlas
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # On scheduled/manual runs, refresh data from Zillow + Census first.
+      # Requires the CENSUS_API_KEY repo secret (income/place/county data).
+      - name: Refresh data (scheduled/manual)
+        if: github.event_name != 'push'
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          CENSUS_YEAR: "2023"
+        run: |
+          node tools/download-zillow.mjs --all
+          ZILLOW_CSV_DIR="$PWD/csv" node tools/import-zillow.js
+          ZILLOW_CSV_DIR="$PWD/csv" node tools/import-zillow-places.js
+          node tools/import-census.js
+
+      - name: Build site
+        run: node tools/generate.js
+
+      # Persist refreshed data + regenerated pages back to the repo.
+      - name: Commit refreshed data (scheduled/manual)
+        if: github.event_name != 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "Refresh Zillow + Census data and regenerate site"
+            git push
+          fi
+
+      # Assemble a clean publishable directory (no source/tooling).
+      - name: Stage site
+        run: |
+          rm -rf _site && mkdir -p _site
+          cp -r assets _site/
+          cp index.html sitemap.xml robots.txt ads.txt _site/ 2>/dev/null || true
+          for d in map states places income rankings methodology about privacy terms; do
+            [ -d "$d" ] && cp -r "$d" _site/
+          done
+          touch _site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
