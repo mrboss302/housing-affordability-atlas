@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mrboss302.github.io/housing-affordability-atlas/sitemap.xml
+Sitemap: https://housingaffordabilityatlas.com/sitemap.xml

@@ -23,8 +23,7 @@ concurrency:
 
 env:
   # Public origin for canonicals, OG tags, sitemap, robots.txt, ads.txt.
-  # Change this to a custom domain when one is added (and add a CNAME step).
-  SITE_URL: https://mrboss302.github.io/housing-affordability-atlas
+  SITE_URL: https://housingaffordabilityatlas.com
 
 jobs:
   build-deploy:
@@ -81,6 +80,8 @@ jobs:
             [ -d "$d" ] && cp -r "$d" _site/
           done
           touch _site/.nojekyll
+          # Custom domain for GitHub Pages.
+          echo "housingaffordabilityatlas.com" > _site/CNAME
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

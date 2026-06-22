@@ -55,7 +55,7 @@ const SITE = {
   // Public origin — drives canonicals, OG URLs, sitemap, robots, ads.txt.
   // Override at build time with SITE_URL (the CI workflow sets it). Default is
   // the GitHub Pages project URL; switch to a custom domain when you add one.
-  origin: (process.env.SITE_URL || "https://mrboss302.github.io/housing-affordability-atlas").replace(/\/$/, ""),
+  origin: (process.env.SITE_URL || "https://housingaffordabilityatlas.com").replace(/\/$/, ""),
   tagline: "Explore where housing may still be affordable.",
   // AdSense publisher ID (shared with the Home Payment Atlas network).
   // EDIT if this site uses a different AdSense account.
