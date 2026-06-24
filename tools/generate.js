@@ -695,6 +695,7 @@ function buildStatePages() {
           name: `${s.name} housing affordability estimates`,
           description: `Estimated home values, monthly payment, income needed, and rent burden for ${s.name}, derived from Zillow Research and U.S. Census data.`,
           creator: { "@type": "Organization", name: SITE.name },
+          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }]
     };
@@ -833,6 +834,7 @@ function buildPlacePages() {
         { "@context": "https://schema.org", "@type": "Dataset",
           name: `${p.name}, ${p.stateAbbr} housing affordability estimates`,
           description: `Home value, payment, income needed, and rent burden for ${p.name}, derived from Zillow Research and U.S. Census data.`,
+          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }] : [])
     };
