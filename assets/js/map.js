@@ -131,6 +131,10 @@
       svg.appendChild(p);
       self.paths[g.abbr] = p;
     });
+    // Click on the SVG background (not a state) deselects
+    svg.addEventListener("click", function (ev) {
+      if (ev.target === svg) self.deselect();
+    });
     this.svgWrap.appendChild(svg);
 
     this.tip = d.createElement("div");
@@ -247,14 +251,27 @@
   MapApp.prototype.select = function (abbr) {
     this.selected = abbr;
     var self = this;
+    var svg = this.svgWrap && this.svgWrap.querySelector("svg");
     Object.keys(this.paths).forEach(function (a) {
       self.paths[a].classList.toggle("is-selected", a === abbr);
     });
+    if (svg) svg.classList.toggle("has-selection", !!abbr);
     this.renderPanel(abbr);
     if (this.panelEl && w.innerWidth < 900) {
       this.panelEl.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "nearest" });
       this.panelEl.focus({ preventScroll: true });
     }
+  };
+
+  MapApp.prototype.deselect = function () {
+    this.selected = null;
+    var self = this;
+    var svg = this.svgWrap && this.svgWrap.querySelector("svg");
+    Object.keys(this.paths).forEach(function (a) {
+      self.paths[a].classList.remove("is-selected");
+    });
+    if (svg) svg.classList.remove("has-selection");
+    if (this.panelEl) this.panelEl.innerHTML = '<p class="panel-hint">Click a state to see details.</p>';
   };
 
   MapApp.prototype.renderPanel = function (abbr) {
