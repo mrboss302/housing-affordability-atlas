@@ -121,6 +121,7 @@ ${jsonld}
 <!-- Google AdSense loader (publisher ${SITE.adClient}). Enables AdSense site
      verification and Auto Ads. Individual ad units stay as labeled placeholders
      until you create units in AdSense and set their numeric slot IDs in ad(). -->
+<meta name="google-adsense-account" content="${SITE.adClient}">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}" crossorigin="anonymous"></script>
 </head>
 <body>
