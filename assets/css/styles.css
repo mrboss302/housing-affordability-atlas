@@ -308,6 +308,8 @@ p { margin: 0 0 1em; }
 
 /* ---- Pills / lists ----------------------------------------------------- */
 .pill-links { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; }
+.context-list { padding-left: 1.2em; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: .95rem; color: var(--ink-2); }
+.context-list li { line-height: 1.5; }
 .pill-links a, .pill-muted {
   display: inline-block; padding: 7px 14px; border-radius: 999px; text-decoration: none;
   font-weight: 600; font-size: .9rem; border: 1px solid var(--line-2); background: var(--surface); color: var(--brand-dark);

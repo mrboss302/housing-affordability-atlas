@@ -654,8 +654,31 @@ function buildMapPages() {
 }
 
 /* ---- State pages ------------------------------------------------------- */
-const STATE_PAGES = ["MD", "VA", "PA"];
-const STATE_NEIGHBORS = { MD: ["VA", "PA", "DE"], VA: ["MD", "NC", "TN"], PA: ["MD", "OH", "NJ"] };
+const STATE_PAGES = [
+  "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN",
+  "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH",
+  "NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT",
+  "VT","VA","WA","WV","WI","WY"
+];
+const STATE_NEIGHBORS = {
+  AL: ["GA","FL","MS","TN"],  AK: ["WA","OR"],            AZ: ["CA","NM","NV","UT"],
+  AR: ["MO","TN","MS","TX"],  CA: ["AZ","NV","OR"],       CO: ["NM","UT","WY","KS"],
+  CT: ["MA","NY","RI"],       DE: ["MD","PA","NJ"],        DC: ["MD","VA"],
+  FL: ["GA","AL"],            GA: ["FL","AL","TN","SC"],   HI: ["CA"],
+  ID: ["MT","WY","UT","OR"],  IL: ["WI","MO","KY","IN"],   IN: ["IL","OH","KY"],
+  IA: ["MN","WI","IL","NE"],  KS: ["CO","NE","MO","OK"],   KY: ["OH","VA","TN","IN"],
+  LA: ["AR","MS","TX"],       ME: ["NH","VT"],              MD: ["VA","PA","DE","WV"],
+  MA: ["RI","CT","NY","NH"],  MI: ["OH","IN","WI"],        MN: ["IA","SD","ND","WI"],
+  MS: ["LA","AR","TN","AL"],  MO: ["IA","IL","KY","AR"],   MT: ["ID","WY","SD","ND"],
+  NE: ["CO","KS","MO","IA"],  NV: ["CA","AZ","UT","OR"],   NH: ["ME","MA","VT"],
+  NJ: ["NY","PA","DE"],       NM: ["AZ","CO","TX","OK"],   NY: ["NJ","PA","CT","MA"],
+  NC: ["VA","TN","GA","SC"],  ND: ["MT","SD","MN"],        OH: ["PA","WV","KY","IN"],
+  OK: ["CO","KS","MO","TX"],  OR: ["CA","NV","ID","WA"],   PA: ["MD","OH","NJ","NY"],
+  RI: ["CT","MA"],            SC: ["GA","NC"],              SD: ["NE","IA","MN","MT"],
+  TN: ["KY","VA","NC","GA"],  TX: ["NM","OK","AR","LA"],   UT: ["AZ","CO","NV","ID"],
+  VT: ["NH","MA","NY"],       VA: ["MD","NC","TN","WV"],   WA: ["OR","ID"],
+  WV: ["OH","PA","MD","VA"],  WI: ["MN","IA","IL","MI"],   WY: ["MT","SD","CO","UT"]
+};
 function buildStatePages() {
   // National mid-tier reference = cross-state median (context, not population-weighted).
   const midVals = STATES.map((s) => evalState(s, { layer: "median" }).scenarioPrice)
@@ -678,11 +701,25 @@ function buildStatePages() {
     const places = PLACES.filter((p) => p.stateAbbr === abbr);
     const url = `states/${s.slug}/index.html`;
     const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
+    const rentBurdenPct = e.rentBurden != null ? Math.round(e.rentBurden * 100) : null;
+    const rentVsBuyGap = (e.monthlyPayment && e.region.rent && e.region.rent.value)
+      ? Math.round(e.monthlyPayment - e.region.rent.value) : null;
+    const rentVsBuyText = rentVsBuyGap != null
+      ? (rentVsBuyGap > 0
+          ? `Estimated monthly ownership costs (~${money(e.monthlyPayment)}) run about ${money(rentVsBuyGap)} more than the estimated median rent (${money(e.region.rent.value)}), so buyers take on a higher monthly obligation in exchange for building equity.`
+          : `Estimated monthly ownership costs (~${money(e.monthlyPayment)}) are close to or below the estimated median rent (${money(e.region.rent.value)}), which can make buying relatively competitive for those who qualify.`)
+      : null;
     const faqs = [
       { q: `What income do you need to buy a home in ${s.name}?`,
         a: `With a typical (mid-tier) ${s.name} home around ${money(e.scenarioPrice)}, the estimated payment is about ${money(e.monthlyPayment)}/month, which generally calls for a household income near ${money(e.incomeNeeded)} (keeping housing close to ${(pp(A.maxHousingDti*100))}% of gross income). A starter home (~${money(eStarter.scenarioPrice)}) lowers that to roughly ${money(eStarter.incomeNeeded)}. Your real figure depends on down payment, rate, and local taxes — model it on <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a>.` },
       { q: `Is ${s.name} affordable compared with other states?`,
         a: `${s.name} ranks ${rank} of ${total} for estimated median-home buying affordability (score ${e.score}/100, ${e.band.label.toLowerCase()})${vsNat != null ? `, with home values about ${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"} the cross-state median` : ""}. Compare it on the <a href="../../rankings/most-affordable-states/index.html">most affordable states ranking</a>.` },
+      { q: `What does the affordability score mean for ${s.name}?`,
+        a: `The score (${e.score}/100) compares the estimated income needed to afford a typical ${s.name} home with the area median household income. A score above 50 means the median income roughly covers the payment; below 50 means the typical household would need to stretch. ${s.name}'s score of ${e.score} puts it in the "${e.band.label}" category — ${e.score >= 60 ? "meaning a median-income household can generally reach a typical home without extreme strain" : e.score >= 40 ? "meaning a typical household is close to the threshold but faces some strain" : "meaning a median-income household would need to spend significantly more than the conventional 28% guideline"}.` },
+      { q: `Is it cheaper to rent or buy in ${s.name}?`,
+        a: rentVsBuyText
+          ? `${rentVsBuyText} This comparison is directional — actual costs depend on your specific down payment, loan terms, property taxes, insurance, and HOA. Run the full math on <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a>.`
+          : `Compare the estimated monthly ownership cost (${money(e.monthlyPayment)}) to local rents to gauge the gap. Use <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a> to model your specific scenario.` },
       { q: `Where do these ${s.name} numbers come from?`,
         a: `Home values are Zillow Research ZHVI${ZVINTAGE ? ` (${ZVINTAGE})` : ""}; rent is the Zillow ZORI index; income is ${incomeLabel}. They are estimates for comparison, not appraisals. Customize the mortgage math on the <a href="${HAM.atlasStateUrl(abbr)}" rel="noopener">${s.name} page on Home Payment Atlas</a>.` }
     ];
@@ -752,14 +789,22 @@ function buildStatePages() {
       ${atlasCta(pre, { stateUrl: HAM.atlasStateUrl(abbr), stateLabel: `See ${s.name} payment assumptions on Home Payment Atlas`, calcUrl: HAM.atlasCalcUrl(e.scenarioPrice, { income: incomeVal }) })}
 
       <section class="section">
+        <h2>How ${esc(s.name)} compares nationally</h2>
+        <ul class="context-list">
+          <li>Affordability rank: <strong>${rank} of ${total} states</strong> (${e.band.label.toLowerCase()} — score ${e.score}/100)</li>
+          ${vsNat != null ? `<li>Typical home value is <strong>${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"}</strong> the cross-state median (${money(natMid)})</li>` : ""}
+          ${incomeVal ? `<li>Median household income: <strong>${money(incomeVal)}</strong>${e.provenance.income === "census" ? " (Census ACS)" : " (illustrative)"}</li>` : ""}
+          ${rentBurdenPct != null ? `<li>Estimated rent burden: <strong>${rentBurdenPct}%</strong> of median income goes to median rent${rentBurdenPct > 30 ? " — above the 30% cost-burdened threshold" : " — below the 30% cost-burdened threshold"}</li>` : ""}
+          <li>Starter home income needed: <strong>${money(eStarter.incomeNeeded)}</strong> vs. family home: <strong>${money(eFamily.incomeNeeded)}</strong></li>
+        </ul>
+      </section>
+
+      <section class="section">
         <h2>Nearby &amp; related states</h2>
         <ul class="pill-links">
-          ${STATE_NEIGHBORS[abbr].map((n) => {
+          ${(STATE_NEIGHBORS[abbr] || []).map((n) => {
             const ns = slugStates[n];
-            const linkable = STATE_PAGES.indexOf(n) !== -1;
-            return linkable
-              ? `<li><a href="${pre}states/${ns.slug}/index.html">${esc(ns.name)}</a></li>`
-              : `<li><span class="pill-muted">${esc(ns.name)}</span></li>`;
+            return ns ? `<li><a href="${pre}states/${ns.slug}/index.html">${esc(ns.name)}</a></li>` : "";
           }).join("")}
           <li><a href="${pre}rankings/most-affordable-states/index.html">All states ranked</a></li>
         </ul>
