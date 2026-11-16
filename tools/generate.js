@@ -1461,22 +1461,13 @@ function buildInfoPages() {
     </table></div>
 
     <h2>Roles of each source</h2>
-    <p><strong>Zillow Research</strong> supplies housing-market texture: home values by tier (ZHVI
-      bottom/mid/top and by bedroom count) and the rent index (ZORI). We use only Zillow's aggregate
-      research datasets — never listings, photos, or individual property details — and Zillow does not
-      endorse this site. <strong>The U.S. Census Bureau</strong> is the backbone for official public-data
-      context: household income (ACS), population, FIPS codes, and the state/county geography that draws
-      the map. <strong>HUD Fair Market Rents</strong> can supplement rent where useful.
-      <strong>Home Payment Atlas</strong> is the destination for detailed mortgage and payment
-      customization — we link there rather than duplicating that math.</p>
+    <p><strong>Zillow Research</strong> supplies home values by tier (ZHVI) and, when a verified ZORI field is present, rent observations. This build's rent source is ${esc(RENT_NOTE)}. We use aggregate research datasets, never listings or individual property details. Zillow does not endorse this site. <strong>The U.S. Census Bureau</strong> supplies ACS median household income, median gross rent, population, FIPS codes and geographic context. HUD Fair Market Rent datasets are <strong>not currently included</strong>, even though they may be useful in future research. <strong>Home Payment Atlas</strong> supplies the linked detailed mortgage calculator.</p>
 
     <h2>Derived insights (not copied tables)</h2>
-    <p>We combine sources into original, directional signals: a <em>starter-home affordability score</em>
-      (Zillow bottom-tier value vs income), a <em>median-</em> and <em>family-home affordability score</em>
-      (mid-tier and 3-bedroom values), <em>rent-vs-income pressure</em> (ZORI vs income), and — on the
-      roadmap — a <em>Buyer Opportunity Score</em> and <em>price-cut opportunity</em> index. Our state rent
-      figure is itself derived: the median of Zillow city-level ZORI within each state.</p>
+    <p>We combine sources into directional, reproducible calculations: a <em>starter-home affordability score</em> (Zillow bottom-tier home value versus income), <em>middle-tier</em> and <em>3-bedroom</em> affordability scores, and an illustrative <em>rent-to-income ratio</em> using ${esc(RENT_NOTE)}. The rent-to-income proxy uses median gross rent and median income of <strong>all</strong> households, not renter households specifically. It is <strong>not the official Census percentage of renters who are cost burdened</strong>. Market-heat and price-cut layers remain unavailable until real source data is imported.</p>
 
+    <h2>Compare states with consistent loan assumptions</h2>
+    <p>Use the <a href="${pre}compare/index.html">Compare States tool</a> to hold down payment, hypothetical interest rate, and household income constant across two statewide Zillow home-value tiers. The calculation uses the same mortgage formula as the map and income pages and includes a one-percentage-point interest-rate stress example. It is not a lender quote, and state averages do not capture city, county or property-specific tax, insurance and HOA differences.</p>
     <h2>How the monthly payment is calculated</h2>
     <p>We take the home value for the chosen tier, subtract a ${(pp(A.downPaymentPct*100))}% down payment, and
       amortize the loan at a ${(A.interestRate*100).toFixed(2)}% rate over ${A.loanTermYears} years for
@@ -1493,6 +1484,8 @@ function buildInfoPages() {
       days-to-pending, and market-heat datasets that are not yet imported. Until then these layers show an
       honest "data coming soon" state — we never publish placeholder market numbers.</p>
 
+    <h2>Data versions and missing coverage</h2>
+    <p>See the <a href="${pre}data-updates/index.html">data coverage report</a> for the Zillow source month, Census ACS vintage, coverage counts, and unavailable market-signal fields. Website build dates are not data observation dates. Where a field is missing, the Atlas should display a labeled limitation rather than invent a value.</p>
     <h2>What this site does not know</h2>
     <p>It does not know your credit, exact local tax rate, HOA dues, insurance quote, loan program, or the
       rate you'll be offered. It is not a pre-approval and not advice. For any real decision, customize the
@@ -1547,8 +1540,8 @@ function buildInfoPages() {
   <div class="wrap narrow">
     ${breadcrumbs(pre, [["index.html", "Home"], ["privacy/index.html", "Privacy"]])}
     <h1>Privacy policy</h1>
-    <p class="lede">This page explains, in plain language, how this website handles information. It is a
-      starting template — review it with a qualified professional before publishing.</p>
+    <p class="lede">This page describes the current data handling of the public Atlas. The comparison and map tools run entirely in your browser, with no account required. The site loads an AdSense verification script; advertising and analytics practices should be periodically reviewed against the services actually enabled.</p>
+    <p><strong>Policy reviewed:</strong> November 15, 2026. This page is an operational description, not legal advice.</p>
     <h2>Cookies</h2>
     <p>The core site works without personalization cookies. If analytics or advertising are enabled, those
       services may set cookies or similar identifiers in your browser.</p>
@@ -1567,8 +1560,7 @@ function buildInfoPages() {
     <p>This site provides educational estimates only and does not collect financial account information to
       provide personalized advice.</p>
     <h2>Contact</h2>
-    <p>Questions about this policy can be sent to the site contact address listed at launch
-      (contact placeholder — add your address before publishing).</p>
+    <p>For a public correction, bug report, or question about this policy, use the <a href="https://github.com/mrboss302/housing-affordability-atlas/issues/new" rel="noopener">project's GitHub Issues page</a> (GitHub sign-in required). <strong>Do not share personal financial data or private information in public issues.</strong> A separate private support inbox has not yet been confirmed by the site owner.</p>
     ${disclaimer()}
   </div>`);
 
