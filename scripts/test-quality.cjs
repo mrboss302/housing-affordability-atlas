@@ -58,6 +58,10 @@ const privacy=read("privacy/index.html");
 assert.ok(!privacy.includes("starting template")&&!privacy.includes("contact placeholder"));
 assert.ok(privacy.includes("housing-affordability-atlas/issues/new"));
 assert.ok(read("states/maryland/index.html").includes("Compare Maryland"));
+assert.ok(read("states/maryland/index.html").includes("What changes with a larger down payment or higher mortgage rate?"),
+  "State pages require modeled down-payment/rate sensitivity analysis");
+assert.ok(!read("map/index.html").includes('value="market-heat"'),
+  "Unimplemented market-heat layer should not be an active control");
 assert.ok(!read("sitemap.xml").includes("<lastmod>"));
 assert.match(read("ads.txt"),/^google\.com, pub-\d+, DIRECT, f08c47fec0942fa0/m);
 assert.ok(read("index.html").includes("google-adsense-account"));
