@@ -33,6 +33,12 @@
   /* Full estimated monthly payment breakdown for a given home price. */
   function payment(homeValue, opts) {
     var a = Object.assign({}, A, opts || {});
+    if (!Number.isFinite(a.interestRate) || a.interestRate < 0 || a.interestRate > 0.25 ||
+        ![10, 15, 20, 25, 30, 40].includes(Number(a.loanTermYears)) ||
+        !Number.isFinite(a.downPaymentPct) || a.downPaymentPct < 0 || a.downPaymentPct > 1 ||
+        !Number.isFinite(a.propertyTaxRate) || a.propertyTaxRate < 0 ||
+        !Number.isFinite(a.insuranceRate) || a.insuranceRate < 0 ||
+        !Number.isFinite(a.pmiRate) || a.pmiRate < 0) return null;
     var hv = num(homeValue);
     if (!hv) return null;
 
@@ -117,7 +123,7 @@
     var factor = opts.scenarioFactor || 1;
     var basePrice = num(rec.medianHomeValue);
     var scenarioPrice = basePrice ? Math.round(basePrice * factor) : null;
-    var pay = payment(scenarioPrice);
+    var pay = payment(scenarioPrice, opts.assumptions);
     var total = pay ? pay.total : null;
     var needed = incomeNeeded(total);
     // Score against the chosen income if given, else the place's own income.
@@ -154,15 +160,15 @@
     var base = a.atlas.calculator;
     var hv = num(homeValue);
     if (!hv) return base;
-    // Param names match the Home Payment Atlas calculator (price/down/rate/term/
-    // tax/ins/hoa/income). tax & ins are percentages on both sites.
+    // Home Payment Atlas expects tax and ins query parameters in ANNUAL
+    // DOLLARS, not percentages. Use the same annual costs modeled here.
     var params = [
       "price=" + Math.round(hv),
       "down=" + Math.round(a.downPaymentPct * 100),
       "rate=" + (a.interestRate * 100).toFixed(3),
       "term=" + a.loanTermYears,
-      "tax=" + (a.propertyTaxRate * 100).toFixed(2),
-      "ins=" + (a.insuranceRate * 100).toFixed(2)
+      "tax=" + Math.round(hv * a.propertyTaxRate),
+      "ins=" + Math.round(hv * a.insuranceRate)
     ];
     if (opts && num(opts.income)) params.push("income=" + Math.round(opts.income));
     return base + "?" + params.join("&");
@@ -206,10 +212,14 @@
     var cs = censusFor(base.abbr);
     var income = cs && num(cs.medianHouseholdIncome)
       ? { value: cs.medianHouseholdIncome, src: "census" }
-      : { value: base.medianIncome, src: "illustrative" };
+      : { value: null, src: "none" };
+    // Never substitute unverified seed rent for Zillow ZORI. When the ZORI
+    // datasets are absent, use clearly labeled Census ACS median GROSS rent.
     var rent = mk && num(mk.zori)
       ? { value: mk.zori, src: "zillow" }
-      : { value: base.medianRent, src: "illustrative" };
+      : (cs && num(cs.medianGrossRent))
+        ? { value: cs.medianGrossRent, src: "census" }
+        : { value: null, src: "none" };
     return {
       abbr: base.abbr, name: base.name, slug: base.slug, fips: base.fips,
       zhvi: mk ? mk.zhvi : null,
@@ -241,6 +251,7 @@
     var rec = recordForLayer(region, layerKey);
     var evalOpts = {};
     if (num(opts.income)) evalOpts.income = opts.income;
+    if (opts.assumptions) evalOpts.assumptions = opts.assumptions;
     var e = evaluate(rec, evalOpts);
     if (!e) e = { record: rec, scenarioPrice: rec.medianHomeValue, payment: null,
       monthlyPayment: null, incomeNeeded: null, score: null, band: band(null),
@@ -283,7 +294,9 @@
       slug: base.slug, name: base.name, stateAbbr: base.stateAbbr, type: base.type, fips: base.fips,
       zhvi: mk ? mk.zhvi : null,
       income: cs && num(cs.medianHouseholdIncome) ? { value: cs.medianHouseholdIncome, src: "census" } : { value: null, src: "none" },
-      rent: mk && num(mk.zori) ? { value: mk.zori, src: "zillow" } : { value: null, src: "none" },
+      rent: mk && num(mk.zori) ? { value: mk.zori, src: "zillow" } :
+        (cs && num(cs.medianGrossRent)) ? { value: cs.medianGrossRent, src: "census" } :
+        { value: null, src: "none" },
       population: cs && num(cs.population) ? cs.population : null,
       censusName: cs ? cs.name : null
     };
@@ -298,7 +311,9 @@
     var hv = region.zhvi ? layer.pick(region.zhvi) : null;
     var rec = { name: region.name, slug: region.slug, abbr: region.stateAbbr,
       medianHomeValue: hv, medianRent: region.rent.value, medianIncome: region.income.value };
-    var e = evaluate(rec, num(opts.income) ? { income: opts.income } : {});
+    var evalOpts = num(opts.income) ? { income: opts.income } : {};
+    if (opts.assumptions) evalOpts.assumptions = opts.assumptions;
+    var e = evaluate(rec, evalOpts);
     e.region = region;
     e.layer = layer;
     e.provenance = {

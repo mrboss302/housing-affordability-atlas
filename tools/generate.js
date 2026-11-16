@@ -64,15 +64,26 @@ const SITE = {
 
 // Honest, per-field data-status note (replaces the old "demo data" wording).
 const ZVINTAGE = (MARKET && MARKET.vintage) ? MARKET.vintage : null;
+const CVINTAGE = (CENSUS && CENSUS.vintage) ? CENSUS.vintage : null;
+const HAS_ZORI = !!(MARKET && MARKET.regions && MARKET.regions.some((r) => Number(r.zori) > 0));
+const RENT_NOTE = HAS_ZORI
+  ? "Zillow ZORI where available, with Census ACS median gross rent for uncovered areas"
+  : CVINTAGE
+    ? "Census ACS median gross rent (" + CVINTAGE + "); the Zillow ZORI fields are unavailable in this dataset"
+    : "no verified rent data";
+const rentSourceFor = (e) => e && e.provenance && e.provenance.rent === "zillow"
+  ? "Zillow ZORI" : e && e.provenance && e.provenance.rent === "census"
+    ? "U.S. Census ACS median gross rent (" + (CVINTAGE || "year not recorded") + ")" : "not available";
 const DATA_NOTE = (function () {
   const home = ZVINTAGE
-    ? "Home values and rents reflect Zillow Research data (ZHVI and ZORI, " + ZVINTAGE + ")."
-    : "Home values and rents are illustrative until the Zillow Research datasets are imported.";
+    ? "Home values are Zillow Research ZHVI (" + ZVINTAGE + "). Rent: " + RENT_NOTE + "."
+    : "Zillow home-value data is currently unavailable; do not use market estimates as verified prices.";
   const inc = CENSUS
     ? "Household income reflects U.S. Census ACS data."
     : "Household income figures are illustrative estimates pending Census ACS import.";
-  return home + " " + inc + " All figures are estimates for general comparison, " +
-    "not appraisals or quotes — confirm details before relying on them.";
+  return home + " " + inc + " Rent relative to the general household median is a proxy, not " +
+    "the Census rent-cost-burden statistic for renter households. All payment figures are modeled " +
+    "planning estimates, not appraisals, quotes, or loan offers.";
 })();
 const SAMPLE_NOTE = DATA_NOTE; // backward-compat alias used by some builders
 
@@ -118,9 +129,7 @@ ${meta.noindex ? '<meta name="robots" content="noindex,follow">\n' : ""}<link re
 <link rel="preconnect" href="https://homepaymentatlas.com">
 <link rel="stylesheet" href="${pre}assets/css/styles.css">
 ${jsonld}
-<!-- Google AdSense loader (publisher ${SITE.adClient}). Enables AdSense site
-     verification and Auto Ads. Individual ad units stay as labeled placeholders
-     until you create units in AdSense and set their numeric slot IDs in ad(). -->
+<!-- Google AdSense account verification only. No empty manual ad placements are rendered. -->
 <meta name="google-adsense-account" content="${SITE.adClient}">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}" crossorigin="anonymous"></script>
 </head>
@@ -138,6 +147,7 @@ function header(pre) {
     </button>
     <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
       ${link("map/index.html", "Map")}
+      ${link("compare/index.html", "Compare states")}
       ${link("rankings/most-affordable-states/index.html", "Rankings")}
       ${link("income/75000/index.html", "By income")}
       ${link("methodology/index.html", "Methodology")}
@@ -164,7 +174,8 @@ function footer(pre) {
       ["rankings/most-affordable-states/index.html", "Most affordable states"],
       ["rankings/most-affordable-places-to-buy/index.html", "Most affordable places"],
       ["rankings/lowest-income-needed/index.html", "Lowest income needed"],
-      ["rankings/best-places-for-first-time-buyers/index.html", "First-time buyers"]
+      ["rankings/best-places-for-first-time-buyers/index.html", "First-time buyers"],
+      ["compare/index.html", "Compare two states"]
     ])}
     ${col("By income", [
       ["income/50000/index.html", "On $50,000"],
@@ -181,13 +192,14 @@ function footer(pre) {
       ["about/index.html", "About"],
       ["methodology/index.html", "Methodology"],
       ["privacy/index.html", "Privacy"],
-      ["terms/index.html", "Terms & disclaimer"]
+      ["terms/index.html", "Terms & disclaimer"],
+      ["data-updates/index.html", "Data coverage and updates"]
     ])}
   </div>
   <div class="wrap foot-base">
     <p class="foot-atlas">Detailed mortgage and payment math lives on our companion site,
       <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a>.</p>
-    <p class="foot-atlas-src">Home values &amp; rent: Zillow Research. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
+    <p class="foot-atlas-src">Home values: Zillow Research ZHVI (${esc(ZVINTAGE || 'unknown vintage')}). Rent: ${esc(RENT_NOTE)}. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
     <p class="foot-legal">&copy; <span data-year>2026</span> ${SITE.name}. Educational estimates only — not financial, legal, tax, mortgage, or real-estate advice. Verify with official sources.</p>
   </div>
 </footer>
@@ -212,27 +224,9 @@ function scripts(pre, withMap) {
   return lines.join("\n");
 }
 
-/* Advertisement slot. Reserves space to avoid layout shift; labeled clearly. */
-function ad(variant) {
-  const sizes = {
-    horizontal: "ad-horizontal",
-    incontent: "ad-incontent",
-    sidebar: "ad-sidebar",
-    footer: "ad-footer"
-  };
-  const slot = "1111111111"; // EDIT: replace with the real data-ad-slot ID
-  return `<aside class="ad-slot ${sizes[variant] || "ad-horizontal"}" aria-label="Advertisement">
-  <span class="ad-label">Advertisement</span>
-  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
-  <ins class="adsbygoogle" style="display:block"
-       data-ad-client="${SITE.adClient}"
-       data-ad-slot="${slot}"
-       data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  -->
-  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
-</aside>`;
-}
+/* Unconfigured manual ad units should not occupy the page. Keep the
+ * AdSense account verification in <head>, but do not render fake ads. */
+function ad() { return ""; }
 
 function breadcrumbs(pre, trail) {
   // trail: array of [href|null, label]
@@ -284,9 +278,10 @@ function disclaimer() {
 // Compact inline source/vintage strip for use under data sections.
 function sourceStrip() {
   const bits = [];
-  if (ZVINTAGE) bits.push(`Home values &amp; rent: Zillow Research, ${ZVINTAGE}`);
-  else bits.push("Home values &amp; rent: illustrative (Zillow import pending)");
-  bits.push(CENSUS ? "Income: U.S. Census ACS" : "Income: illustrative (Census import pending)");
+  if (ZVINTAGE) bits.push(`Home values: Zillow ZHVI, ${ZVINTAGE}`);
+  else bits.push("Home values: no verified Zillow observations");
+  bits.push("Rent: " + esc(RENT_NOTE));
+  bits.push(CVINTAGE ? "Income: U.S. Census " + CVINTAGE : "Income: no verified Census observations");
   return `<p class="source-strip">Sources — ${bits.join(" · ")}. Zillow does not endorse this site.</p>`;
 }
 function atlasCta(pre, opts) {
@@ -347,12 +342,7 @@ function mapControls(pre, opts) {
     `<option value="income-needed">Income needed</option>` +
     `<option value="monthly-payment">Estimated monthly payment</option>` +
     `<option value="rent-affordability">Rent affordability</option>` +
-    `</optgroup>` +
-    `<optgroup label="Market signals (data roadmap)">` +
-    `<option value="buyer-opportunity">Buyer opportunity (preview)</option>` +
-    `<option value="market-heat">Market heat (preview)</option>` +
-    `<option value="price-cut-share">Price-cut share (preview)</option>` +
-    `</optgroup>`;
+    `</optgroup>`; // Keep unimplemented market-signal layers out of active controls.
   return `<form class="map-controls" aria-label="Map controls" onsubmit="return false">
     <div class="control">
       <label for="ctl-income">Income level</label>
@@ -456,11 +446,11 @@ function placeTable(pre, places, opts) {
       <td><span class="score-pill" data-band="${e.band.key}">${e.score == null ? "—" : e.score}</span></td>
     </tr>`;
   }).join("");
-  const srcBit = ZVINTAGE ? `Zillow ZHVI/ZORI ${ZVINTAGE}, Census ACS` : "Zillow + Census";
+  const srcBit = ZVINTAGE ? `Zillow ZHVI ${ZVINTAGE}, rent: ${RENT_NOTE}, Census ACS` : "Zillow + Census";
   return `<div class="table-wrap"><table class="data-table">
     <caption class="table-caption">${esc(opts.caption || "City affordability — " + srcBit + ".")}</caption>
     <thead><tr><th scope="col">#</th><th scope="col">City</th><th scope="col">Home value</th>
-    <th scope="col">Est. payment</th><th scope="col">Income needed</th><th scope="col">Rent burden</th><th scope="col">Score</th></tr></thead>
+    <th scope="col">Est. payment</th><th scope="col">Income needed</th><th scope="col">Rent-to-income proxy</th><th scope="col">Score</th></tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
 }
@@ -489,7 +479,7 @@ function statCards(e, labels) {
     ${c("Estimated monthly payment", money(e.monthlyPayment), "Principal, interest, taxes, insurance, PMI")}
     ${c("Estimated income needed", money(e.incomeNeeded), "So housing ≤ 28% of income")}
     ${c("Affordability score", e.score == null ? "—" : e.score + " / 100", e.band.label)}
-    ${c("Estimated rent burden", pct(e.rentBurden), "Median rent ÷ median income")}
+    ${c("Estimated rent-to-income proxy", pct(e.rentBurden), "Median gross rent ÷ all-household median income")}
   </div>`;
 }
 
@@ -501,6 +491,8 @@ module.exports = { run };
 function run() {
   buildHome();
   buildMapPages();
+  buildComparePage();
+  buildDataCoveragePage();
   buildStatePages();
   buildPlacePages();
   buildIncomePages();
@@ -509,6 +501,174 @@ function run() {
   buildSitemapRobots();
   console.log("Generated " + GENERATED.length + " files:");
   GENERATED.forEach((g) => console.log("  " + g));
+}
+
+function buildComparePage() {
+  const url = "compare/index.html";
+  const trail = [["index.html", "Home"], [url, "Compare states"]];
+  const assumptions = {
+    rate: (A.interestRate * 100).toFixed(1),
+    down: Math.round(A.downPaymentPct * 100),
+    term: A.loanTermYears
+  };
+  const example = HAM.payment(400000);
+  const needed = HAM.incomeNeeded(example.total);
+  const meta = {
+    url,
+    title: "Compare State Housing Affordability | Housing Affordability Atlas",
+    description: "Compare two U.S. states with the same income, down payment and hypothetical mortgage rate. See estimated monthly costs, income gaps and source-backed home values.",
+    jsonld: [breadcrumbJsonLd(trail), {
+      "@context": "https://schema.org", "@type": "WebApplication",
+      name: "Compare State Housing Affordability",
+      applicationCategory: "FinanceApplication", operatingSystem: "Any",
+      url: SITE.origin + "/compare/",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" }
+    }]
+  };
+  page(meta, (pre) => `
+  <div class="wrap">
+    ${breadcrumbs(pre, trail)}
+    <section class="compare-hero">
+      <p class="eyebrow">Two markets · One scenario</p>
+      <h1>Compare where your income goes further</h1>
+      <p class="lede">A home price is only one part of affordability. Compare two states using the <strong>same income, home-value tier, down payment, and illustrative mortgage rate</strong>. See the estimated payment, housing budget gap and sensitivity to a higher rate side by side.</p>
+      <p class="source-strip">Home prices: Zillow ZHVI ${esc(ZVINTAGE || "not available")}. Income context and median gross rent: Census ${esc(CVINTAGE || "not available")}. These are statewide averages and modeled payments, <strong>not</strong> live lender rates or property-specific quotes.</p>
+    </section>
+    <section class="compare-workspace" data-compare aria-labelledby="compare-heading">
+      <form class="compare-form" onsubmit="return false" aria-label="Choose your state comparison">
+        <h2 id="compare-heading">Build your comparison</h2>
+        <div class="compare-fields">
+          <div class="compare-field"><label for="ha-first">First state</label><select id="ha-first"><option>Loading state data…</option></select></div>
+          <div class="compare-field"><label for="ha-second">Second state</label><select id="ha-second"><option>Loading state data…</option></select></div>
+          <div class="compare-field"><label for="ha-layer">Home-value tier</label><select id="ha-layer">
+            <option value="starter">Starter (bottom tier)</option><option value="median" selected>Typical (middle tier)</option>
+            <option value="family">3-bedroom family home</option></select></div>
+          <div class="compare-field"><label for="ha-income">Annual household income ($)</label>
+            <input id="ha-income" type="number" value="75000" min="1000" max="10000000" step="1000" inputmode="decimal"></div>
+          <div class="compare-field"><label for="ha-down">Down payment (%)</label>
+            <input id="ha-down" type="number" value="10" min="0" max="100" step="1" inputmode="decimal"></div>
+          <div class="compare-field"><label for="ha-rate">Assumed interest rate (%)</label>
+            <input id="ha-rate" type="number" value="6.7" min="0" max="25" step="0.1" inputmode="decimal"></div>
+          <div class="compare-field"><label for="ha-term">Fixed-rate mortgage term</label>
+            <select id="ha-term"><option value="30" selected>30 years</option><option value="20">20 years</option><option value="15">15 years</option></select></div>
+        </div>
+        <p class="compare-help">Mortgage rate, insurance (${(A.insuranceRate * 100).toFixed(2)}%/yr), property tax (${(A.propertyTaxRate * 100).toFixed(2)}%/yr), PMI (${(A.pmiRate * 100).toFixed(2)}%/yr when under 20% down), and the ${(A.maxHousingDti * 100).toFixed(0)}% housing-income guideline are modeling assumptions, not quotes. State tax rates, utilities, HOA dues and credit-based terms may differ widely.</p>
+      </form>
+      <div class="compare-takeaway" role="region" aria-labelledby="compare-result-heading">
+        <h2 id="compare-result-heading">What changes between states?</h2>
+        <p id="ha-summary" aria-live="polite">Select two states to compare housing expenses under the same assumptions.</p>
+        <button id="ha-share" type="button" class="btn btn-ghost">Copy shareable comparison link</button>
+        <p id="ha-status" class="compare-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="compare-cards">
+        ${["a","b"].map((key) => `
+        <article id="ha-card-${key}" class="compare-card" aria-labelledby="ha-${key}-name">
+          <p class="compare-kicker">Market ${key.toUpperCase()}</p><h2 id="ha-${key}-name">—</h2>
+          <div class="compare-amount"><span>Estimated monthly payment</span><strong id="ha-${key}-payment">—</strong></div>
+          <dl class="compare-list">
+            <div><dt>Home value (selected tier)</dt><dd id="ha-${key}-price">—</dd></div>
+            <div><dt>Income needed (28% housing ratio)</dt><dd id="ha-${key}-needed">—</dd></div>
+            <div><dt>Monthly budget gap at your income</dt><dd><strong id="ha-${key}-gap">—</strong><small id="ha-${key}-gap-note"></small></dd></div>
+            <div><dt>Affordability score</dt><dd id="ha-${key}-score">—</dd></div>
+            <div><dt>Principal &amp; interest</dt><dd id="ha-${key}-pi">—</dd></div>
+            <div><dt>Modeled property tax</dt><dd id="ha-${key}-tax">—</dd></div>
+            <div><dt>Modeled insurance</dt><dd id="ha-${key}-insurance">—</dd></div>
+            <div><dt>Modeled PMI</dt><dd id="ha-${key}-pmi">—</dd></div>
+            <div><dt>Down payment alone</dt><dd id="ha-${key}-down">—</dd></div>
+            <div><dt>At an interest rate 1 point higher</dt><dd id="ha-${key}-stress">—</dd></div>
+            <div><dt>Median gross rent (source below)</dt><dd id="ha-${key}-rent">—<small id="ha-${key}-rent-source"></small></dd></div>
+          </dl>
+          <div class="compare-links"><a id="ha-${key}-state" href="${pre}map/index.html">View state evidence</a>
+          <a id="ha-${key}-atlas" href="${A.atlas.calculator}" rel="noopener">Customize full payment on Home Payment Atlas</a></div>
+        </article>`).join("")}
+      </div>
+      <p class="compare-help">The rent figure is a separate Census ACS median gross-rent observation when Zillow ZORI is unavailable; it is not a computed mortgage component. Monthly homeownership estimates exclude maintenance, HOA dues, utilities, moving costs, and property-specific taxes or insurance. Down payment does not include closing costs. Scenario links may expose your entered income amount to people you share them with.</p>
+    </section>
+    <section class="section compare-explainer">
+      <h2>How to read this comparison</h2>
+      <div class="compare-explainer-grid">
+        <article><h3>The same financing assumptions</h3>
+          <p>To isolate the price differences in statewide housing markets, both cards use the same hypothetical fixed rate and down payment. Actual quoted rates depend on borrower credit, the loan program, lenders, and property-specific factors. The one-point stress figure recomputes principal and interest without changing other assumptions.</p>
+        </article>
+        <article><h3>Income gap, not mortgage approval</h3>
+          <p>The monthly budget gap compares the estimated payment with ${(A.maxHousingDti * 100).toFixed(0)}% of your gross monthly household income. A negative value means the modeled payment is above that guideline. It does <strong>not</strong> establish whether a bank will approve a mortgage, and it excludes non-housing debts and household expenses.</p>
+        </article>
+        <article><h3>One reproducible example</h3>
+          <p>A hypothetical ${money(400000)} home at ${assumptions.down}% down, a ${assumptions.rate}% fixed mortgage rate over ${assumptions.term} years, ${(A.propertyTaxRate * 100).toFixed(2)}% annual property tax, ${(A.insuranceRate * 100).toFixed(2)}% annual insurance and modeled PMI produces about <strong>${money(example.total)} per month</strong>. This corresponds to about <strong>${money(needed)} annual gross income</strong> at the 28% housing guideline. You can reproduce it by entering the numbers in Home Payment Atlas; these are not current lender terms.</p>
+        </article>
+        <article><h3>Why area averages are not listings</h3>
+          <p>Zillow's home-value index measures typical values within property-market tiers, not current asking prices or appraisals. Census median gross rent covers different households and property types, so the rent-to-income ratio is only a broad proxy. For a decision, compare exact addresses, local property tax assessments, insurance quotes, lenders' offers and travel costs.</p>
+        </article>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Explore the national context</h2>
+      <p>This table uses the published default assumptions and each state's Census income. Use the comparison above for a household-specific scenario or open a state to see its sources and home-value tiers.</p>
+      ${stateTable(pre,{limit:10})}
+      <p><a class="textlink" href="${pre}rankings/most-affordable-states/">Explore the full ranking →</a></p>
+    </section>
+    ${atlasCta(pre)}
+    ${disclaimer()}
+  </div>
+  <script defer src="${pre}assets/data/assumptions.js"></script>
+  <script defer src="${pre}assets/data/states.js"></script>
+  <script defer src="${pre}assets/data/market-data.js"></script>
+  <script defer src="${pre}assets/data/census-data.js"></script>
+  <script defer src="${pre}assets/js/affordability.js"></script>
+  <script defer src="${pre}assets/js/compare.js"></script>
+  `);
+}
+
+function buildDataCoveragePage() {
+  const url = "data-updates/index.html";
+  const trail = [["index.html","Home"],[url,"Data coverage"]];
+  const market = MARKET && MARKET.regions || [];
+  const census = CENSUS && CENSUS.regions || [];
+  const city = MARKET_PLACES && MARKET_PLACES.regions || [];
+  const zoriCount = market.filter(r=>Number(r.zori)>0).length;
+  const housingCount = market.filter(r=>Number(r.zhvi && r.zhvi.mid)>0).length;
+  const incomeCount = census.filter(r=>Number(r.medianHouseholdIncome)>0).length;
+  const acsRentCount = census.filter(r=>Number(r.medianGrossRent)>0).length;
+  const cityValueCount=city.filter(r=>r.type==="city" && r.zhvi && Number(r.zhvi.mid)>0).length;
+  const meta={
+    url,
+    title:"Data Coverage & Research Updates | Housing Affordability Atlas",
+    description:"See the Zillow and Census observation dates, source coverage and data limitations behind Housing Affordability Atlas maps, rankings and mortgage estimates.",
+    jsonld:[breadcrumbJsonLd(trail)]
+  };
+  page(meta,(pre)=>`
+    <div class="wrap narrow">
+      ${breadcrumbs(pre,trail)}
+      <h1>Data coverage and research updates</h1>
+      <p class="lede">An atlas is only useful when its source labels tell the truth. This page shows the observation periods currently loaded into the site and which features are based on measured data versus illustrative modeling.</p>
+      <section class="coverage-stats">
+        <div><span>Home-value observation</span><strong>${esc(ZVINTAGE || "Unavailable")}</strong><small>Zillow Research ZHVI</small></div>
+        <div><span>Income/rent survey</span><strong>${esc(CVINTAGE || "Unavailable")}</strong><small>U.S. Census ACS</small></div>
+        <div><span>States with Zillow values</span><strong>${housingCount} / 51</strong><small>Middle-tier home-value observations</small></div>
+        <div><span>States with Census income</span><strong>${incomeCount} / 51</strong><small>ACS median household income</small></div>
+      </section>
+      <section class="section">
+        <h2>What's available now</h2>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Data</th><th>Coverage</th><th>Source and limitations</th></tr></thead><tbody>
+          <tr><td>Middle-tier home values</td><td>${housingCount} state markets</td><td>Zillow ZHVI ${esc(ZVINTAGE || "")}; does not represent actual listings or lending appraisals</td></tr>
+          <tr><td>State household income</td><td>${incomeCount} state markets</td><td>U.S. Census ${esc(CVINTAGE || "")}; all-household median</td></tr>
+          <tr><td>State median gross rent</td><td>${acsRentCount} Census states; ${zoriCount} Zillow ZORI states</td><td>When Zillow ZORI is unavailable, the Atlas uses Census ACS median gross rent instead and labels it accordingly</td></tr>
+          <tr><td>Curated city home values</td><td>${cityValueCount} indexed city observations</td><td>Available City ZHVI values from Zillow Research; individual pages are indexed only when home-value and income data are complete</td></tr>
+          <tr><td>Price cuts, for-sale inventory and days to pending</td><td>No verified live layer</td><td>Not used to publish market-heat or buyer-opportunity rankings without evidence</td></tr>
+          <tr><td>Mortgage monthly costs and income needed</td><td>Calculated, not measured</td><td>Illustrative fixed-rate amortization, tax, insurance, PMI and 28% gross-income guideline</td></tr>
+        </tbody></table></div>
+      </section>
+      <section class="section">
+        <h2>What 'rent burden' means here</h2>
+        <p>Where Zillow ZORI is absent, the Atlas uses the <strong>Census ACS median gross rent</strong> and divides its annual equivalent by the <strong>median income of all households</strong> in the state. This is a high-level rent-to-income proxy, <strong>not the official Census share of renter households paying more than 30% of their own income</strong>. Do not treat our proxy as the population's true cost-burden rate.</p>
+        <h2>When numbers change</h2>
+        <p>Mortgage assumptions can change independently from published research data. The source month (${esc(ZVINTAGE || "unknown")}) is not the website build date. A monthly scheduled import checks for new Zillow research data. The Census ACS reference period (${esc(CVINTAGE || "unknown")}) changes on a different release schedule, and a failed import may leave the last valid dataset in place. Dates on this page refer to the loaded datasets, not a guarantee of current listings.</p>
+        <h2>Corrections and source verification</h2>
+        <p>Original sources: <a href="https://www.zillow.com/research/data/" rel="noopener">Zillow Research data</a> and <a href="https://www.census.gov/programs-surveys/acs/" rel="noopener">U.S. Census ACS</a>. Please report an incorrect number or broken source explanation via <a href="https://github.com/mrboss302/housing-affordability-atlas/issues/new" rel="noopener">a public project issue</a>; avoid sharing personal financial details there. The original source terms and permitted redistribution should be verified before monetization.</p>
+      </section>
+      ${disclaimer()}
+    </div>
+  `);
 }
 
 /* ---- Homepage ---------------------------------------------------------- */
@@ -537,7 +697,8 @@ function buildHome() {
         run the detailed payment math.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="${pre}map/index.html">Open the affordability map</a>
-        <a class="btn" href="${pre}rankings/most-affordable-states/index.html">See most affordable states</a>
+        <a class="btn" href="${pre}compare/index.html">Compare two states</a>
+        <a class="btn btn-ghost" href="${pre}rankings/most-affordable-states/index.html">See state rankings</a>
       </div>
       <p class="hero-flag">Built on ${vint}${CENSUS ? " and U.S. Census ACS income" : ""}. Estimates for comparison, not advice.</p>
     </div>
@@ -549,19 +710,24 @@ function buildHome() {
       <h2>A market-discovery map, not a listings site</h2>
       <p>Most housing sites show you individual listings. This one shows you the <em>landscape</em>:
         which states and markets are within reach for a given income, where rent eats the most of a
-        paycheck, and where starter homes are still attainable. Home values and rents come from
-        <strong>Zillow Research</strong> (ZHVI and ZORI); income and geography come from the
-        <strong>U.S. Census Bureau</strong>. When you find a market worth a closer look, continue to
+        paycheck, and where starter homes are still attainable. Home values come from <strong>Zillow Research</strong> (ZHVI), while rent is taken
+        from ${esc(RENT_NOTE)}. Household income and geography come from the
+        <strong>U.S. Census Bureau</strong>.  When you find a market worth a closer look, continue to
         <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a> to customize down payment,
         taxes, PMI, insurance, and HOA.</p>
       <div class="feature-grid">
         <a class="feature" href="${pre}map/buying-affordability/index.html"><h3>Buying affordability</h3><p>How far an income stretches toward a median or starter home, by state.</p></a>
         <a class="feature" href="${pre}map/income-needed/index.html"><h3>Income needed</h3><p>The household income typically required to buy a mid-tier home.</p></a>
-        <a class="feature" href="${pre}map/rent-burden/index.html"><h3>Rent affordability</h3><p>Zillow rent as a share of income — where renting pressures budgets most.</p></a>
+        <a class="feature" href="${pre}map/rent-burden/index.html"><h3>Rent affordability</h3><p>Census ACS median gross rent divided by general median household income: an illustrative pressure proxy, not an official burden rate.</p></a>
         <a class="feature" href="${pre}rankings/most-affordable-starter-home-markets/index.html"><h3>Starter homes</h3><p>Markets where entry-level (bottom-tier) homes are most attainable.</p></a>
       </div>
     </section>
 
+    <section class="section feature-compare">
+      <div class="compare-promo"><div><p class="compare-label">An extra way to explore</p><h2>How far does your income go?</h2><p>Choose two states and use the same mortgage assumptions to compare a typical home, modeled monthly payment, annual income needed, and rate sensitivity. Unlike listings, this makes big geographic differences visible.</p></div>
+        <a class="btn btn-primary" href="${pre}compare/index.html">Open state comparison</a>
+      </div>
+    </section>
     ${mapControls(pre)}
     ${mapBlock(pre)}
     ${sourceStrip()}
@@ -609,8 +775,8 @@ function buildMapPages() {
       url: "map/rent-burden/index.html", mode: "rent-burden",
       h1: "Rent Burden Map — by State",
       title: "Rent Affordability & Rent Burden by State | Housing Affordability Atlas",
-      desc: "Map of estimated rent burden — Zillow rent index as a share of household income — across U.S. states. See where renting consumes the largest share of a paycheck.",
-      intro: "This view maps estimated rent burden: the Zillow Observed Rent Index (state value = median of city ZORI) as a percentage of household income. Above ~30% is generally considered rent burdened."
+      desc: "Map of illustrative rent-to-income ratios using Census ACS median gross rent and general household income where Zillow ZORI is missing. See where renting consumes the largest share of a paycheck.",
+      intro: "This view maps a rent-to-income proxy: Census ACS median gross rent divided by the all-household median income when Zillow ZORI is unavailable. It is not the official Census measure of renter cost burden."
     }
   ];
   defs.forEach((dpage) => {
@@ -702,7 +868,17 @@ function buildStatePages() {
     const places = PLACES.filter((p) => p.stateAbbr === abbr);
     const url = `states/${s.slug}/index.html`;
     const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
-    const rentBurdenPct = e.rentBurden != null ? Math.round(e.rentBurden * 100) : null;
+    const rentBurdenPct = e.rentBurden != null ? e.rentBurden : null;
+    const increasedRate = HAM.payment(e.scenarioPrice, { interestRate: A.interestRate + 0.01 });
+    const twentyDown = HAM.payment(e.scenarioPrice, { downPaymentPct: 0.20 });
+    const extraDown = twentyDown && e.payment ? twentyDown.downPayment - e.payment.downPayment : null;
+    const monthlyDownSavings = twentyDown && e.payment ? e.payment.total - twentyDown.total : null;
+    const increasedMonthly = increasedRate && e.payment ? increasedRate.total - e.payment.total : null;
+    const financeSensitivity = e.payment && increasedRate && twentyDown ? [
+      { title: "Default example: " + pp(A.downPaymentPct * 100) + "% down", rate: pp(A.interestRate * 100) + "%", payment: e.payment.total, down: e.payment.downPayment, pmi: e.payment.pmi },
+      { title: "Larger down payment: 20% down", rate: pp(A.interestRate * 100) + "%", payment: twentyDown.total, down: twentyDown.downPayment, pmi: twentyDown.pmi },
+      { title: "Rate +1 percentage point", rate: pp((A.interestRate + 0.01) * 100) + "%", payment: increasedRate.total, down: increasedRate.downPayment, pmi: increasedRate.pmi }
+    ] : [];
     const rentVsBuyGap = (e.monthlyPayment && e.region.rent && e.region.rent.value)
       ? Math.round(e.monthlyPayment - e.region.rent.value) : null;
     const rentVsBuyText = rentVsBuyGap != null
@@ -722,7 +898,7 @@ function buildStatePages() {
           ? `${rentVsBuyText} This comparison is directional — actual costs depend on your specific down payment, loan terms, property taxes, insurance, and HOA. Run the full math on <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a>.`
           : `Compare the estimated monthly ownership cost (${money(e.monthlyPayment)}) to local rents to gauge the gap. Use <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a> to model your specific scenario.` },
       { q: `Where do these ${s.name} numbers come from?`,
-        a: `Home values are Zillow Research ZHVI${ZVINTAGE ? ` (${ZVINTAGE})` : ""}; rent is the Zillow ZORI index; income is ${incomeLabel}. They are estimates for comparison, not appraisals. Customize the mortgage math on the <a href="${HAM.atlasStateUrl(abbr)}" rel="noopener">${s.name} page on Home Payment Atlas</a>.` }
+        a: `Home values are Zillow Research ZHVI${ZVINTAGE ? ` (${ZVINTAGE})` : ""}; rent: ${rentSourceFor(e)}; income is ${incomeLabel}. They are estimates for comparison, not appraisals. Customize the mortgage math on the <a href="${HAM.atlasStateUrl(abbr)}" rel="noopener">${s.name} page on Home Payment Atlas</a>.` }
     ];
     const meta = {
       url,
@@ -733,7 +909,6 @@ function buildStatePages() {
           name: `${s.name} housing affordability estimates`,
           description: `Estimated home values, monthly payment, income needed, and rent burden for ${s.name}, derived from Zillow Research and U.S. Census data.`,
           creator: { "@type": "Organization", name: SITE.name },
-          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }]
     };
@@ -747,6 +922,10 @@ function buildStatePages() {
         affordability${vsNat != null ? `, with typical values about ${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"} the cross-state median` : ""}.</p>
       ${ad("horizontal")}
       <section class="section">
+        <div class="compare-promo"><div><p class="compare-label">Compare markets</p><h2>How does ${esc(s.name)} compare?</h2><p>Keep the same income and hypothetical loan assumptions while comparing the latest Zillow housing values across two states.</p></div>
+        <a class="btn btn-primary" href="${pre}compare/index.html?a=${s.abbr}">Compare ${esc(s.name)}</a></div>
+      </section>
+      <section class="section">
         <h2>${esc(s.name)} affordability summary</h2>
         ${statCards(e, { priceNote: "Zillow mid-tier ZHVI" })}
         <p>At a typical home value of ${money(e.scenarioPrice)} against ${incomeLabel.replace("U.S. ", "")}
@@ -755,6 +934,16 @@ function buildStatePages() {
           ${money(eStarter.scenarioPrice)} (income needed ~${money(eStarter.incomeNeeded)}); a 3-bedroom
           family home about ${money(eFamily.scenarioPrice)} (income needed ~${money(eFamily.incomeNeeded)}).</p>
         ${sourceStrip()}
+      </section>
+
+      <section class="section">
+        <h2>What changes with a larger down payment or higher mortgage rate?</h2>
+        <p>For the Zillow middle-tier ${esc(s.name)} home (${money(e.scenarioPrice)}), the scenarios below hold modeled property tax and insurance constant. Using 20% down instead of the default ${pp(A.downPaymentPct * 100)}% down reduces the estimated payment by about <strong>${money(monthlyDownSavings)} per month</strong>, but increases the initial down payment by <strong>${money(extraDown)}</strong>, before closing costs. A rate one percentage point higher would increase the default estimated payment by about <strong>${money(increasedMonthly)} per month</strong>.</p>
+        <div class="table-wrap"><table class="data-table"><caption class="table-caption">Illustrative ${esc(s.name)} financing sensitivity, ${ZVINTAGE ? "Zillow ZHVI " + ZVINTAGE : "source month not available"}. Not current interest-rate quotes.</caption>
+          <thead><tr><th scope="col">Scenario</th><th scope="col">Rate</th><th scope="col">Payment/mo</th><th scope="col">Down payment</th><th scope="col">PMI/mo</th></tr></thead>
+          <tbody>${financeSensitivity.map(x => `<tr><td>${esc(x.title)}</td><td>${x.rate}</td><td>${money(x.payment)}</td><td>${money(x.down)}</td><td>${money(x.pmi)}</td></tr>`).join("")}</tbody>
+        </table></div>
+        <p class="muted">The loan model assumes ${A.loanTermYears} years, ${pp(A.propertyTaxRate * 100)}% annual property tax, ${pp(A.insuranceRate * 100)}% insurance, and ${pp(A.pmiRate * 100)}% annual PMI on loans with less than 20% down. Real costs differ. Compare your household's income and another state in <a href="${pre}compare/index.html?a=${s.abbr}">Compare States</a>.</p>
       </section>
 
       <section class="section">
@@ -775,7 +964,7 @@ function buildStatePages() {
         <h2>Cities in ${esc(s.name)}</h2>
         <p>Major ${esc(s.name)} cities ranked by estimated buying-affordability score, using Zillow city
           home values and Census city income.</p>
-        ${placeTable(pre, places, { caption: `${s.name} city affordability — Zillow ZHVI/ZORI${ZVINTAGE ? ", " + ZVINTAGE : ""} and Census ACS.` })}
+        ${placeTable(pre, places, { caption: `${s.name} city affordability — Zillow ZHVI${ZVINTAGE ? ", " + ZVINTAGE : ""}, rent: ${RENT_NOTE}, Census ACS.` })}
       </section>
 
       ${ad("incontent")}
@@ -795,7 +984,7 @@ function buildStatePages() {
           <li>Affordability rank: <strong>${rank} of ${total} states</strong> (${e.band.label.toLowerCase()} — score ${e.score}/100)</li>
           ${vsNat != null ? `<li>Typical home value is <strong>${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"}</strong> the cross-state median (${money(natMid)})</li>` : ""}
           ${incomeVal ? `<li>Median household income: <strong>${money(incomeVal)}</strong>${e.provenance.income === "census" ? " (Census ACS)" : " (illustrative)"}</li>` : ""}
-          ${rentBurdenPct != null ? `<li>Estimated rent burden: <strong>${rentBurdenPct}%</strong> of median income goes to median rent${rentBurdenPct > 30 ? " — above the 30% cost-burdened threshold" : " — below the 30% cost-burdened threshold"}</li>` : ""}
+          ${rentBurdenPct != null ? `<li>Rent-to-income proxy: <strong>${rentBurdenPct}%</strong> (median gross rent divided by all-household median income), not the renter-specific Census cost-burden statistic.</li>` : ""}
           <li>Starter home income needed: <strong>${money(eStarter.incomeNeeded)}</strong> vs. family home: <strong>${money(eFamily.incomeNeeded)}</strong></li>
         </ul>
       </section>
@@ -863,7 +1052,7 @@ function buildPlacePages() {
       { q: `Is it cheaper to rent or buy in ${p.name}?`,
         a: `${rentVsBuy}Rent-vs-buy depends on how long you stay, your down payment, and maintenance. Compare scenarios on the <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas calculator</a>.` },
       { q: `Where do these ${p.name} figures come from?`,
-        a: `${hasHome ? "Home value and rent are from Zillow Research (ZHVI/ZORI" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "). " : "Rent is from Zillow Research (ZORI). "}Income and population are from the U.S. Census Bureau (ACS 5-year ${CENSUS ? "2023" : ""}). They are estimates for comparison, not appraisals. Zillow does not endorse this site.` }
+        a: `${hasHome ? "Home value comes from Zillow Research ZHVI" + (ZVINTAGE ? " (" + ZVINTAGE + "). " : ". ") : ""}Rent source: ${rentSourceFor(e)}. Household income and population are from the U.S. Census Bureau (${CVINTAGE || "vintage not recorded"}). Rent relative to the general median income is a proxy, not official renter cost burden. Figures are estimates, not appraisals. Zillow does not endorse this site.` }
     ];
     const meta = {
       url,
@@ -880,7 +1069,6 @@ function buildPlacePages() {
         { "@context": "https://schema.org", "@type": "Dataset",
           name: `${p.name}, ${p.stateAbbr} housing affordability estimates`,
           description: `Home value, payment, income needed, and rent burden for ${p.name}, derived from Zillow Research and U.S. Census data.`,
-          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }] : [])
     };
@@ -892,7 +1080,7 @@ function buildPlacePages() {
           ${naCard("Estimated home value", "County-level Zillow ZHVI not published")}
           ${naCard("Estimated monthly payment", "Needs a home value")}
           <div class="stat-card"><span class="stat-k">Median household income</span><span class="stat-v">${money(e.region.income.value)}</span><span class="stat-note">U.S. Census ACS</span></div>
-          <div class="stat-card"><span class="stat-k">Median rent</span><span class="stat-v">${e.region.rent.value != null ? money(e.region.rent.value) + "/mo" : "—"}</span><span class="stat-note">Zillow ZORI</span></div>
+          <div class="stat-card"><span class="stat-k">Median gross rent</span><span class="stat-v">${e.region.rent.value != null ? money(e.region.rent.value) + "/mo" : "—"}</span><span class="stat-note">${esc(rentSourceFor(e))}</span></div>
           <div class="stat-card"><span class="stat-k">Population</span><span class="stat-v">${e.region.population != null ? e.region.population.toLocaleString("en-US") : "—"}</span><span class="stat-note">U.S. Census ACS</span></div>
         </div>`;
 
@@ -939,8 +1127,8 @@ function buildPlacePages() {
 function placeSourceStrip(e) {
   const bits = [];
   if (e.provenance.homeValue === "zillow") bits.push(`Home value: Zillow ZHVI${ZVINTAGE ? ", " + ZVINTAGE : ""}`);
-  if (e.provenance.rent === "zillow") bits.push("Rent: Zillow ZORI");
-  if (e.provenance.income === "census") bits.push("Income & population: U.S. Census ACS 2023");
+  if (e.provenance.rent !== "none") bits.push("Rent: " + rentSourceFor(e));
+  if (e.provenance.income === "census") bits.push("Income & population: U.S. Census " + CVINTAGE);
   return `<p class="source-strip">Sources — ${bits.join(" · ")}. Zillow does not endorse this site.</p>`;
 }
 
@@ -1038,7 +1226,7 @@ function placeTableFromStates(pre, rows, income) {
     <tbody>${body}</tbody></table></div>`;
 }
 
-// Crawlable state rent-burden table (Zillow ZORI rent vs income), worst first.
+// Crawlable rent-to-income proxy table; rent source is explicit.
 function rentTable(pre, opts) {
   opts = opts || {};
   let rows = STATES.map((s) => ({ s, e: evalState(s, { layer: "median" }) }))
@@ -1052,9 +1240,9 @@ function rentTable(pre, opts) {
       <td>${pct(e.rentBurden)}</td></tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="data-table">
-    <caption class="table-caption">Estimated rent burden by state — Zillow ZORI rent ÷ income${ZVINTAGE ? `, ${ZVINTAGE}` : ""}. Above ~30% is considered rent burdened.</caption>
+    <caption class="table-caption">Illustrative rent-to-income ratio by state — ${esc(RENT_NOTE)} divided by all-household median income. This is not the official Census renter cost-burden statistic.</caption>
     <thead><tr><th scope="col">#</th><th scope="col">State</th><th scope="col">Est. rent</th>
-    <th scope="col">Income</th><th scope="col">Rent burden</th></tr></thead>
+    <th scope="col">Income</th><th scope="col">Rent-to-income proxy</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 
@@ -1104,9 +1292,9 @@ function buildRankingPages() {
     {
       slug: "most-rent-burdened-markets", h1: "Most Rent-Burdened States",
       title: "Most Rent-Burdened States (Rent vs Income)",
-      desc: "States where rent consumes the largest share of income, using the Zillow rent index against household income.",
-      intro: "States ranked by estimated rent burden — Zillow rent as a share of income. This captures rent-vs-income pressure, where renting strains budgets most.",
-      methodLine: "Rent burden is the Zillow ZORI rent index (state = median of city ZORI) divided by income, annualized.",
+      desc: "States ranked by an illustrative Census ACS rent-to-income ratio, not an official renter cost-burden rate.",
+      intro: "States ranked by illustrative rent-to-income pressure using available verified rent and income sources. This ratio cannot establish the share of renter households that are cost burdened.",
+      methodLine: "The ratio divides median gross rent by overall median household income, annualized. It is not the official Census renter cost-burden statistic; renters may have very different incomes from the overall median.",
       table: (pre) => rentTable(pre, {})
     },
     {
@@ -1116,7 +1304,7 @@ function buildRankingPages() {
       intro: "Major U.S. cities ranked by estimated buying-affordability score, using Zillow city-level home values (ZHVI) and Census city income.",
       methodLine: "Each city combines its Zillow mid-tier home value with Census income and the standard mortgage assumptions.",
       placeBased: true,
-      table: (pre) => placeTable(pre, PLACES, { layer: "median", caption: "Most affordable cities to buy — Zillow ZHVI/ZORI and Census ACS." })
+      table: (pre) => placeTable(pre, PLACES, { layer: "median", caption: "Most affordable cities to buy — Zillow ZHVI and Census ACS." })
     },
     {
       slug: "best-places-for-first-time-buyers", h1: "Best Cities for First-Time Buyers",
@@ -1169,7 +1357,7 @@ function buildRankingPages() {
     const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: "Where does this ranking's data come from?",
-        a: "Home values and rent are from Zillow Research (ZHVI/ZORI)" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
+        a: "Home values come from Zillow ZHVI; rent: " + RENT_NOTE + ". Home-value vintage:" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
       { q: "How is the ranking calculated?",
         a: dpage.methodLine + " Full details are on the <a href=\"../../methodology/index.html\">methodology page</a>." },
       { q: "How do I adjust the assumptions?",
@@ -1288,22 +1476,13 @@ function buildInfoPages() {
     </table></div>
 
     <h2>Roles of each source</h2>
-    <p><strong>Zillow Research</strong> supplies housing-market texture: home values by tier (ZHVI
-      bottom/mid/top and by bedroom count) and the rent index (ZORI). We use only Zillow's aggregate
-      research datasets — never listings, photos, or individual property details — and Zillow does not
-      endorse this site. <strong>The U.S. Census Bureau</strong> is the backbone for official public-data
-      context: household income (ACS), population, FIPS codes, and the state/county geography that draws
-      the map. <strong>HUD Fair Market Rents</strong> can supplement rent where useful.
-      <strong>Home Payment Atlas</strong> is the destination for detailed mortgage and payment
-      customization — we link there rather than duplicating that math.</p>
+    <p><strong>Zillow Research</strong> supplies home values by tier (ZHVI) and, when a verified ZORI field is present, rent observations. This build's rent source is ${esc(RENT_NOTE)}. We use aggregate research datasets, never listings or individual property details. Zillow does not endorse this site. <strong>The U.S. Census Bureau</strong> supplies ACS median household income, median gross rent, population, FIPS codes and geographic context. HUD Fair Market Rent datasets are <strong>not currently included</strong>, even though they may be useful in future research. <strong>Home Payment Atlas</strong> supplies the linked detailed mortgage calculator.</p>
 
     <h2>Derived insights (not copied tables)</h2>
-    <p>We combine sources into original, directional signals: a <em>starter-home affordability score</em>
-      (Zillow bottom-tier value vs income), a <em>median-</em> and <em>family-home affordability score</em>
-      (mid-tier and 3-bedroom values), <em>rent-vs-income pressure</em> (ZORI vs income), and — on the
-      roadmap — a <em>Buyer Opportunity Score</em> and <em>price-cut opportunity</em> index. Our state rent
-      figure is itself derived: the median of Zillow city-level ZORI within each state.</p>
+    <p>We combine sources into directional, reproducible calculations: a <em>starter-home affordability score</em> (Zillow bottom-tier home value versus income), <em>middle-tier</em> and <em>3-bedroom</em> affordability scores, and an illustrative <em>rent-to-income ratio</em> using ${esc(RENT_NOTE)}. The rent-to-income proxy uses median gross rent and median income of <strong>all</strong> households, not renter households specifically. It is <strong>not the official Census percentage of renters who are cost burdened</strong>. Market-heat and price-cut layers remain unavailable until real source data is imported.</p>
 
+    <h2>Compare states with consistent loan assumptions</h2>
+    <p>Use the <a href="${pre}compare/index.html">Compare States tool</a> to hold down payment, hypothetical interest rate, and household income constant across two statewide Zillow home-value tiers. The calculation uses the same mortgage formula as the map and income pages and includes a one-percentage-point interest-rate stress example. It is not a lender quote, and state averages do not capture city, county or property-specific tax, insurance and HOA differences.</p>
     <h2>How the monthly payment is calculated</h2>
     <p>We take the home value for the chosen tier, subtract a ${(pp(A.downPaymentPct*100))}% down payment, and
       amortize the loan at a ${(A.interestRate*100).toFixed(2)}% rate over ${A.loanTermYears} years for
@@ -1320,6 +1499,8 @@ function buildInfoPages() {
       days-to-pending, and market-heat datasets that are not yet imported. Until then these layers show an
       honest "data coming soon" state — we never publish placeholder market numbers.</p>
 
+    <h2>Data versions and missing coverage</h2>
+    <p>See the <a href="${pre}data-updates/index.html">data coverage report</a> for the Zillow source month, Census ACS vintage, coverage counts, and unavailable market-signal fields. Website build dates are not data observation dates. Where a field is missing, the Atlas should display a labeled limitation rather than invent a value.</p>
     <h2>What this site does not know</h2>
     <p>It does not know your credit, exact local tax rate, HOA dues, insurance quote, loan program, or the
       rate you'll be offered. It is not a pre-approval and not advice. For any real decision, customize the
@@ -1374,8 +1555,8 @@ function buildInfoPages() {
   <div class="wrap narrow">
     ${breadcrumbs(pre, [["index.html", "Home"], ["privacy/index.html", "Privacy"]])}
     <h1>Privacy policy</h1>
-    <p class="lede">This page explains, in plain language, how this website handles information. It is a
-      starting template — review it with a qualified professional before publishing.</p>
+    <p class="lede">This page describes the current data handling of the public Atlas. The comparison and map tools run entirely in your browser, with no account required. The site loads an AdSense verification script; advertising and analytics practices should be periodically reviewed against the services actually enabled.</p>
+    <p><strong>Policy reviewed:</strong> November 15, 2026. This page is an operational description, not legal advice.</p>
     <h2>Cookies</h2>
     <p>The core site works without personalization cookies. If analytics or advertising are enabled, those
       services may set cookies or similar identifiers in your browser.</p>
@@ -1394,8 +1575,7 @@ function buildInfoPages() {
     <p>This site provides educational estimates only and does not collect financial account information to
       provide personalized advice.</p>
     <h2>Contact</h2>
-    <p>Questions about this policy can be sent to the site contact address listed at launch
-      (contact placeholder — add your address before publishing).</p>
+    <p>For a public correction, bug report, or question about this policy, use the <a href="https://github.com/mrboss302/housing-affordability-atlas/issues/new" rel="noopener">project's GitHub Issues page</a> (GitHub sign-in required). <strong>Do not share personal financial data or private information in public issues.</strong> A separate private support inbox has not yet been confirmed by the site owner.</p>
     ${disclaimer()}
   </div>`);
 
@@ -1415,7 +1595,7 @@ function buildInfoPages() {
       Research, U.S. Census Bureau) plus standard mortgage assumptions. They are illustrations, not quotes,
       appraisals, or guarantees.</p>
     <h2>Data attribution</h2>
-    <p>Home values and rent are from Zillow Research; income, population, and geography from the U.S. Census
+    <p>Home values are Zillow Research ZHVI; rent comes from ${esc(RENT_NOTE)}. Income, population, and geography come from U.S. Census
       Bureau. Zillow does not endorse this site, and this data is not official government data where Zillow
       is the source. We use only aggregate research datasets — not listings or individual property details.</p>
     <h2>Not professional advice</h2>
@@ -1438,10 +1618,10 @@ function buildSitemapRobots() {
   const urls = GENERATED.filter((f) => f.endsWith("index.html") && !NOINDEX.has(f))
     .map((f) => SITE.origin + "/" + f.replace(/index\.html$/, ""));
   console.log("[generate] noindex/excluded from sitemap: " + (NOINDEX.size ? Array.from(NOINDEX).join(", ") : "none"));
-  const today = new Date().toISOString().slice(0, 10);
+  // Build dates are not proof that page data or editorial copy changed.
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}
+${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}
 </urlset>
 `;
   write("sitemap.xml", sitemap);

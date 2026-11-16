@@ -15,6 +15,12 @@
 
   var M = (w.HAM_MARKET || {});
   var C = (w.HAM_CENSUS || null);
+  var hasZori = !!(M.regions || []).some(function (r) { return Number.isFinite(r.zori) && r.zori > 0; });
+  var hasACSrent = !!(C && C.regions && C.regions.some(function (r) {
+    return Number.isFinite(r.medianGrossRent) && r.medianGrossRent > 0;
+  }));
+  var rentSource = hasZori ? "Zillow ZORI where available; otherwise U.S. Census ACS median gross rent" :
+    (hasACSrent ? "U.S. Census ACS 5-year median gross rent" : "No verified rent data");
 
   var SOURCES = {
     // Where each displayed field comes from
@@ -27,11 +33,11 @@
         status: (M.regions && M.regions.length) ? "real" : "pending"
       },
       rent: {
-        label: "Rent index (ZORI, state = median of city ZORI)",
-        source: "Zillow Research",
-        sourceUrl: "https://www.zillow.com/research/data/",
-        vintage: M.vintage || null,
-        status: (M.regions && M.regions.length) ? "derived" : "pending"
+        label: "Estimated rent-to-income proxy (median gross rent divided by all-household median income)",
+        source: rentSource,
+        sourceUrl: hasZori ? "https://www.zillow.com/research/data/" : "https://www.census.gov/programs-surveys/acs/",
+        vintage: hasZori ? (M.vintage || null) : (hasACSrent ? C.vintage : null),
+        status: hasZori ? "derived" : (hasACSrent ? "real" : "pending")
       },
       income: {
         label: "Median household income",
@@ -63,11 +69,12 @@
       }
     },
     // Short attribution string used in footers / methodology (status-aware).
-    attribution: "Home values and rent: Zillow Research (ZHVI, ZORI)" +
-      (M.vintage ? ", " + M.vintage : "") + ". Geography and FIPS codes: U.S. Census Bureau " +
-      "(Cartographic Boundary Files). Household income: " +
-      (C ? "U.S. Census ACS." : "illustrative estimates pending U.S. Census ACS import.") +
-      " Detailed payment math: Home Payment Atlas. Zillow does not endorse this site.",
+    attribution: "Home values: Zillow Research ZHVI" + (M.vintage ? " (" + M.vintage + ")" : "") +
+      ". Rent: " + rentSource + (hasACSrent && !hasZori ? " (" + C.vintage + ")" : "") +
+      ". The rent-to-income figure is a proxy, not a Census renter-cost-burden statistic. " +
+      "Geography and FIPS codes: U.S. Census Bureau (Cartographic Boundary Files). Household income: " +
+      (C ? "U.S. Census ACS (" + C.vintage + ")." : "not currently verified.") +
+      " Detailed payment scenarios: Home Payment Atlas. Zillow does not endorse this site.",
     lastUpdated: M.vintage || null
   };
 

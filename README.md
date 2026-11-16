@@ -6,12 +6,22 @@ discovery companion to **[Home Payment Atlas](https://homepaymentatlas.com)**
 (the detailed mortgage/payment calculator). This site shows the *landscape* of
 affordability; Home Payment Atlas is where users customize the payment math.
 
+## Quality and originality improvements (November 2026)
+
+- **Compare States** (`/compare/`) enables a user-defined household income, down payment, hypothetical interest rate, loan term and Zillow home-value tier. The two markets are calculated by the shared engine, including monthly payment, income guideline, budget gap and rate sensitivity.
+- **Data Coverage** (`/data-updates/`) makes the Zillow observation month, Census ACS vintage, rent-source availability and limitations visible to visitors.
+- **Rent-source correction:** the committed Zillow state data has no verified ZORI observations. The site now uses U.S. Census ACS median gross rent where available and labels its rent-to-income result as a proxy, **not** the Census measure of the share of renter households paying over 30%.
+- **Companion calculator repair:** links to Home Payment Atlas now send property tax and insurance as annual **dollar amounts** rather than percentages, matching the destination's query parameters.
+- **Content quality:** remove empty ad placeholders, unsupported CC-BY blanket licenses on mixed-source data, inaccurate 100× rent percentage labels, and build-date-based `<lastmod>` tags.
+- **Quality checks:** `node tools/generate.js && node scripts/test-quality.cjs` rebuilds and tests site pages, source metadata, affordability calculations, internal indexing and the shareable comparison.
+- The site remains a research/education tool and is not a lender. No software changes guarantee AdSense approval. See `QUALITY-REVIEW.md` for owner checks.
+
 ## Positioning & data strategy
 
-- **Census/HUD** — official public-data backbone: income, population, FIPS
+- **Census** — official public-data backbone: income, population, rent, FIPS
   codes, and the state/county geography that draws the map.
 - **Zillow Research** — housing-market texture: home values (ZHVI by tier and
-  bedroom count) and rent (ZORI). Aggregate research datasets only — never
+  bedroom count); rent (ZORI) only if the downloaded dataset actually contains it. Aggregate research datasets only — never
   listings, photos, or individual property details. *Zillow does not endorse
   this site.*
 - **Home Payment Atlas** — the destination for detailed mortgage/payment
@@ -22,7 +32,7 @@ affordability; Home Payment Atlas is where users customize the payment math.
 | Field | Source | Status |
 |---|---|---|
 | State home values (starter / median / family / by bedroom) | Zillow Research ZHVI | **Real** |
-| State rent index | Zillow Research ZORI (state = median of city ZORI) | **Real (derived)** |
+| State rent / rent-to-income proxy | Census ACS median gross rent when Zillow ZORI is unavailable | **Real Census observation; derived proxy** |
 | State / county / place median income, rent, population | U.S. Census ACS 5-year 2023 | **Real** |
 | **City** home values (tiers + bedroom) & rent | Zillow Research City ZHVI / ZORI | **Real** (33 curated cities) |
 | State / county geometry, FIPS | U.S. Census Cartographic Boundary Files | **Real** |
@@ -126,10 +136,10 @@ the generator, so numbers are consistent everywhere. Keyboard-accessible
 
 ## AdSense
 
-- Publisher ID: `SITE.adClient` in `tools/generate.js`. The loader is active in
-  `<head>`; `ads.txt` is generated at the root. Ad units are labeled
-  "Advertisement" and reserve space (low CLS). Replace the placeholder
-  `data-ad-slot` IDs in `ad()` with real units, then uncomment the `<ins>` block.
+- Publisher ID: `SITE.adClient` in `tools/generate.js`. The loader remains active in
+  `<head>` for AdSense site verification; `ads.txt` is generated at the root.
+  Unconfigured manual ad placements render nothing. Configure genuine ad units and
+  the required consent settings through AdSense before turning on manual placements.
 
 ## Add more pages
 

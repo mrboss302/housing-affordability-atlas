@@ -71,12 +71,15 @@ jobs:
           fi
 
       # Assemble a clean publishable directory (no source/tooling).
+      - name: Validate generated pages and affordability math
+        run: node scripts/test-quality.cjs
+
       - name: Stage site
         run: |
           rm -rf _site && mkdir -p _site
           cp -r assets _site/
           cp index.html sitemap.xml robots.txt ads.txt _site/ 2>/dev/null || true
-          for d in map states places income rankings methodology about privacy terms; do
+          for d in map states places income rankings methodology about privacy terms compare data-updates; do
             [ -d "$d" ] && cp -r "$d" _site/
           done
           touch _site/.nojekyll
