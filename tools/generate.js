@@ -958,7 +958,7 @@ function buildStatePages() {
     const vsNat = (natMid && e.scenarioPrice) ? Math.round(((e.scenarioPrice - natMid) / natMid) * 100) : null;
     const places = PLACES.filter((p) => p.stateAbbr === abbr);
     const url = `states/${s.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
+    const trail = [["index.html", "Home"], ["states/index.html", "States"], [url, s.name]];
     const rentBurdenPct = e.rentBurden != null ? e.rentBurden : null;
     const increasedRate = HAM.payment(e.scenarioPrice, { interestRate: A.interestRate + 0.01 });
     const twentyDown = HAM.payment(e.scenarioPrice, { downPaymentPct: 0.20 });
