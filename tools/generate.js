@@ -342,12 +342,7 @@ function mapControls(pre, opts) {
     `<option value="income-needed">Income needed</option>` +
     `<option value="monthly-payment">Estimated monthly payment</option>` +
     `<option value="rent-affordability">Rent affordability</option>` +
-    `</optgroup>` +
-    `<optgroup label="Market signals (data roadmap)">` +
-    `<option value="buyer-opportunity">Buyer opportunity (preview)</option>` +
-    `<option value="market-heat">Market heat (preview)</option>` +
-    `<option value="price-cut-share">Price-cut share (preview)</option>` +
-    `</optgroup>`;
+    `</optgroup>`; // Keep unimplemented market-signal layers out of active controls.
   return `<form class="map-controls" aria-label="Map controls" onsubmit="return false">
     <div class="control">
       <label for="ctl-income">Income level</label>
