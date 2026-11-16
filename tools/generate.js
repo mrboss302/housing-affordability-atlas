@@ -493,6 +493,7 @@ function run() {
   buildMapPages();
   buildComparePage();
   buildDataCoveragePage();
+  buildStateDirectory();
   buildStatePages();
   buildPlacePages();
   buildIncomePages();
@@ -669,6 +670,67 @@ function buildDataCoveragePage() {
       ${disclaimer()}
     </div>
   `);
+}
+
+function buildStateDirectory() {
+  const url = "states/index.html";
+  const trail = [["index.html", "Home"], [url, "All states"]];
+  const rows = STATES
+    .filter((state) => STATE_PAGES.includes(state.abbr))
+    .slice()
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .map((state) => {
+      const e = evalState(state, {layer:"median"});
+      const income = e && e.region && e.region.income.src === "census"
+        ? e.region.income.value : null;
+      return {state, e, income};
+    });
+  const count = rows.length;
+  const source = ZVINTAGE ? "Zillow Research ZHVI (" + ZVINTAGE + ")" : "Zillow home values (source unavailable)";
+  const census = CVINTAGE ? "U.S. Census " + CVINTAGE : "U.S. Census income (source unavailable)";
+  page({
+    url,
+    title: "Housing Affordability by State: 50 States + DC | Housing Atlas",
+    description: "Browse all 50 U.S. states and Washington, DC. Compare Zillow home values, modeled mortgage payments and income needed, with links to state-level affordability analysis.",
+    jsonld: [breadcrumbJsonLd(trail)]
+  }, (pre) => `
+    <div class="wrap">
+      ${breadcrumbs(pre,trail)}
+      <section class="state-directory-hero">
+        <p class="eyebrow">Browse the full Atlas</p>
+        <h1>Housing affordability by state</h1>
+        <p class="lede">Explore each state's typical home value, estimated monthly ownership payment and the income needed under the same illustrative mortgage assumptions. All ${count} states and Washington, DC are linked below, so you can go straight to your market.</p>
+        <p class="source-strip">Home values: ${esc(source)}. Household income: ${esc(census)}. Payments and income needed are modeled, not lender quotes. County, city and neighborhood costs differ from statewide averages.</p>
+        <p class="state-directory-actions"><a class="btn btn-primary" href="${pre}compare/index.html">Compare any two states</a>
+          <a class="btn" href="${pre}map/index.html">Explore the interactive map</a></p>
+      </section>
+      <section class="section" aria-labelledby="state-directory-heading">
+        <h2 id="state-directory-heading">Find a state's housing market</h2>
+        <p>Listed alphabetically. A typical home is Zillow's middle-tier Home Value Index, not a live listing price. The modeled payment includes principal, interest, property tax, insurance and PMI where applicable, with ${pp(A.downPaymentPct*100)}% down at an illustrative ${(A.interestRate*100).toFixed(1)}% rate.</p>
+        <div class="table-wrap">
+          <table class="data-table state-directory-table">
+            <caption class="table-caption">State-by-state middle-tier home values (${esc(ZVINTAGE || "source month unknown")}), calculated monthly payments and annual income needed using shared assumptions.</caption>
+            <thead><tr>
+              <th scope="col">State</th><th scope="col">Home value</th>
+              <th scope="col">Est. monthly payment</th><th scope="col">Income needed</th>
+            </tr></thead>
+            <tbody>${rows.map(({state,e})=>`<tr>
+              <th scope="row"><a href="${pre}states/${state.slug}/">${esc(state.name)}</a></th>
+              <td>${money(e.scenarioPrice)}</td>
+              <td>${money(e.monthlyPayment)}</td>
+              <td>${money(e.incomeNeeded)}</td>
+            </tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section state-directory-guidance">
+        <h2>What changes when you cross state lines?</h2>
+        <p>Statewide prices give a useful first comparison, but they hide the variation between cities and neighborhoods. The Atlas helps compare the scale of housing costs, not predict the price of an individual property. For a relocation decision, check real listings, local property taxes, homeowners insurance quotes and the cost of commuting.</p>
+        <p>The <a href="${pre}compare/">state comparison tool</a> holds your income, down payment, fixed-rate assumption and home type constant, allowing you to see whether higher home prices or a different income context changes the projected budget. For exact loan costs, use <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a>.</p>
+        <p>See <a href="${pre}methodology/">how the estimates are calculated</a> and <a href="${pre}data-updates/">the source vintage and coverage report</a>.</p>
+      </section>
+      ${disclaimer()}
+    </div>`);
 }
 
 /* ---- Homepage ---------------------------------------------------------- */
