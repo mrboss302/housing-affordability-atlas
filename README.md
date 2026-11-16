@@ -16,6 +16,20 @@ affordability; Home Payment Atlas is where users customize the payment math.
 - **Quality checks:** `node tools/generate.js && node scripts/test-quality.cjs` rebuilds and tests site pages, source metadata, affordability calculations, internal indexing and the shareable comparison.
 - The site remains a research/education tool and is not a lender. No software changes guarantee AdSense approval. See `QUALITY-REVIEW.md` for owner checks.
 
+## SEO and discoverability (November 2026)
+
+This static site now includes a crawlable [all-state directory](https://housingaffordabilityatlas.com/states/), a [data-backed rankings hub](https://housingaffordabilityatlas.com/rankings/), canonical and structured page metadata, a generated social-preview PNG, and a navigable custom 404 page. Nonfunctional market-signal preview pages remain accessible but are excluded from indexing.
+
+The site generator creates all public HTML and the 1200×630 social image. The build and deployment pipeline checks that the sitemap contains only indexable pages, every indexed page is reachable by ordinary links, titles/descriptions are unique, and internal links and structured data are coherent.
+
+```bash
+node tools/generate.js
+node scripts/test-quality.cjs
+node scripts/test-seo.cjs
+```
+
+See [SEO-REVIEW.md](SEO-REVIEW.md) for the full audit, technical decisions and follow-up steps in Google Search Console. Passing tests does not guarantee indexing, higher rankings, traffic or AdSense approval.
+
 ## Positioning & data strategy
 
 - **Census** — official public-data backbone: income, population, rent, FIPS

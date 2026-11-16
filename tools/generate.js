@@ -15,6 +15,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { generate: generateSocialCard } = require("./generate-social-card.js");
 
 const ROOT = path.resolve(__dirname, "..");
 
@@ -123,7 +124,16 @@ ${meta.noindex ? '<meta name="robots" content="noindex,follow">\n' : ""}<link re
 <meta property="og:title" content="${esc(meta.ogTitle || meta.title)}">
 <meta property="og:description" content="${esc(meta.ogDescription || meta.description)}">
 <meta property="og:url" content="${esc(canonical)}">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="${SITE.origin}/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Housing Affordability Atlas name and decorative geographic tiles">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(meta.ogTitle || meta.title)}">
+<meta name="twitter:description" content="${esc(meta.ogDescription || meta.description)}">
+<meta name="twitter:image" content="${SITE.origin}/assets/og-card.png">
 <meta name="theme-color" content="#0f766e">
 <link rel="icon" href="${pre}assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://homepaymentatlas.com">
@@ -147,8 +157,9 @@ function header(pre) {
     </button>
     <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
       ${link("map/index.html", "Map")}
-      ${link("compare/index.html", "Compare states")}
-      ${link("rankings/most-affordable-states/index.html", "Rankings")}
+      ${link("states/index.html", "States")}
+      ${link("compare/index.html", "Compare")}
+      ${link("rankings/index.html", "Rankings")}
       ${link("income/75000/index.html", "By income")}
       ${link("methodology/index.html", "Methodology")}
       ${link("about/index.html", "About")}
@@ -171,6 +182,7 @@ function footer(pre) {
       ["map/rent-burden/index.html", "Rent burden"]
     ])}
     ${col("Rankings", [
+      ["rankings/index.html", "All housing rankings"],
       ["rankings/most-affordable-states/index.html", "Most affordable states"],
       ["rankings/most-affordable-places-to-buy/index.html", "Most affordable places"],
       ["rankings/lowest-income-needed/index.html", "Lowest income needed"],
@@ -184,6 +196,7 @@ function footer(pre) {
       ["income/150000/index.html", "On $150,000"]
     ])}
     ${col("States", [
+      ["states/index.html", "All 50 states + DC"],
       ["states/maryland/index.html", "Maryland"],
       ["states/virginia/index.html", "Virginia"],
       ["states/pennsylvania/index.html", "Pennsylvania"]
@@ -305,11 +318,26 @@ function page(meta, body, opts) {
   opts = opts || {};
   const pre = prefixFor(meta.url);
   disclaimer._pre = pre;
-  const websiteLd = {
-    "@context": "https://schema.org", "@type": "WebSite", name: SITE.name,
-    url: SITE.origin + "/", description: SITE.tagline
-  };
-  meta.jsonld = [websiteLd].concat(meta.jsonld || []);
+  const url = SITE.origin + "/" + meta.url.replace(/index\.html$/, "");
+  const websiteLd = meta.url === "index.html"
+    ? {
+      "@context": "https://schema.org", "@type": "WebSite",
+      "@id": SITE.origin + "/#website",
+      name: SITE.name, url: SITE.origin + "/",
+      description: SITE.tagline, inLanguage: "en-US",
+      publisher: { "@id": SITE.origin + "/#organization" }
+    }
+    : {
+      "@context": "https://schema.org", "@type": "WebPage",
+      "@id": url + "#webpage", name: meta.title,
+      url, description: meta.description, inLanguage: "en-US",
+      isPartOf: { "@id": SITE.origin + "/#website" }
+    };
+  const organizationLd = meta.url === "index.html"
+    ? [{ "@context": "https://schema.org", "@type": "Organization",
+      "@id": SITE.origin + "/#organization", name: SITE.name, url: SITE.origin + "/" }]
+    : [];
+  meta.jsonld = [websiteLd, ...organizationLd].concat(meta.jsonld || []);
   const html =
     head(meta, pre) +
     header(pre) +
@@ -489,15 +517,18 @@ module.exports = { run };
  *  PAGE DEFINITIONS
  * ===================================================================== */
 function run() {
+  generateSocialCard();
   buildHome();
   buildMapPages();
   buildComparePage();
   buildDataCoveragePage();
+  buildStateDirectory();
   buildStatePages();
   buildPlacePages();
   buildIncomePages();
   buildRankingPages();
   buildInfoPages();
+  buildNotFoundPage();
   buildSitemapRobots();
   console.log("Generated " + GENERATED.length + " files:");
   GENERATED.forEach((g) => console.log("  " + g));
@@ -671,13 +702,96 @@ function buildDataCoveragePage() {
   `);
 }
 
+function buildStateDirectory() {
+  const url = "states/index.html";
+  const trail = [["index.html", "Home"], [url, "All states"]];
+  const rows = STATES
+    .filter((state) => STATE_PAGES.includes(state.abbr))
+    .slice()
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .map((state) => {
+      const e = evalState(state, {layer:"median"});
+      const income = e && e.region && e.region.income.src === "census"
+        ? e.region.income.value : null;
+      return {state, e, income};
+    });
+  const count = rows.length;
+  const source = ZVINTAGE ? "Zillow Research ZHVI (" + ZVINTAGE + ")" : "Zillow home values (source unavailable)";
+  const census = CVINTAGE ? "U.S. Census " + CVINTAGE : "U.S. Census income (source unavailable)";
+  page({
+    url,
+    title: "Housing Affordability by State: 50 States + DC | Housing Atlas",
+    description: "Browse all 50 U.S. states and Washington, DC. Compare Zillow home values, modeled mortgage payments and income needed, with links to state-level affordability analysis.",
+    jsonld: [breadcrumbJsonLd(trail)]
+  }, (pre) => `
+    <div class="wrap">
+      ${breadcrumbs(pre,trail)}
+      <section class="state-directory-hero">
+        <p class="eyebrow">Browse the full Atlas</p>
+        <h1>Housing affordability by state</h1>
+        <p class="lede">Explore each state's typical home value, estimated monthly ownership payment and the income needed under the same illustrative mortgage assumptions. All ${count} states and Washington, DC are linked below, so you can go straight to your market.</p>
+        <p class="source-strip">Home values: ${esc(source)}. Household income: ${esc(census)}. Payments and income needed are modeled, not lender quotes. County, city and neighborhood costs differ from statewide averages.</p>
+        <p class="state-directory-actions"><a class="btn btn-primary" href="${pre}compare/index.html">Compare any two states</a>
+          <a class="btn" href="${pre}map/index.html">Explore the interactive map</a></p>
+      </section>
+      <section class="section" aria-labelledby="state-directory-heading">
+        <h2 id="state-directory-heading">Find a state's housing market</h2>
+        <p>Listed alphabetically. A typical home is Zillow's middle-tier Home Value Index, not a live listing price. The modeled payment includes principal, interest, property tax, insurance and PMI where applicable, with ${pp(A.downPaymentPct*100)}% down at an illustrative ${(A.interestRate*100).toFixed(1)}% rate.</p>
+        <div class="table-wrap">
+          <table class="data-table state-directory-table">
+            <caption class="table-caption">State-by-state middle-tier home values (${esc(ZVINTAGE || "source month unknown")}), calculated monthly payments and annual income needed using shared assumptions.</caption>
+            <thead><tr>
+              <th scope="col">State</th><th scope="col">Home value</th>
+              <th scope="col">Est. monthly payment</th><th scope="col">Income needed</th>
+            </tr></thead>
+            <tbody>${rows.map(({state,e})=>`<tr>
+              <th scope="row"><a href="${pre}states/${state.slug}/">${esc(state.name)}</a></th>
+              <td>${money(e.scenarioPrice)}</td>
+              <td>${money(e.monthlyPayment)}</td>
+              <td>${money(e.incomeNeeded)}</td>
+            </tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section state-directory-guidance">
+        <h2>What changes when you cross state lines?</h2>
+        <p>Statewide prices give a useful first comparison, but they hide the variation between cities and neighborhoods. The Atlas helps compare the scale of housing costs, not predict the price of an individual property. For a relocation decision, check real listings, local property taxes, homeowners insurance quotes and the cost of commuting.</p>
+        <p>The <a href="${pre}compare/">state comparison tool</a> holds your income, down payment, fixed-rate assumption and home type constant, allowing you to see whether higher home prices or a different income context changes the projected budget. For exact loan costs, use <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a>.</p>
+        <p>See <a href="${pre}methodology/">how the estimates are calculated</a> and <a href="${pre}data-updates/">the source vintage and coverage report</a>.</p>
+      </section>
+      ${disclaimer()}
+    </div>`);
+}
+
+function buildNotFoundPage() {
+  page({
+    url: "404.html",
+    title: "Page Not Found | Housing Affordability Atlas",
+    description: "That Housing Affordability Atlas page wasn't found. Use the state directory, maps, rankings and methodology to find the research you're looking for.",
+    noindex: true
+  },(pre)=>`
+    <div class="wrap narrow">
+      <section class="section" aria-labelledby="notfound-heading">
+        <p class="eyebrow">404 · Page not found</p>
+        <h1 id="notfound-heading">This place isn't on the map.</h1>
+        <p class="lede">The address may have changed, or the page may never have existed. Here are a few working paths back into the Atlas.</p>
+        <div class="state-directory-actions">
+          <a class="btn btn-primary" href="${pre}states/">Browse all state profiles</a>
+          <a class="btn" href="${pre}map/">Explore the affordability map</a>
+          <a class="btn" href="${pre}rankings/">Browse rankings</a>
+        </div>
+        <p class="source-strip">For broken internal links or source corrections, please use the public <a href="https://github.com/mrboss302/housing-affordability-atlas/issues/new" rel="noopener">issue tracker</a> without posting personal details.</p>
+      </section>
+    </div>`);
+}
+
 /* ---- Homepage ---------------------------------------------------------- */
 function buildHome() {
   const url = "index.html";
   const meta = {
     url,
-    title: "Housing Affordability Atlas — Explore Where Housing May Still Be Affordable",
-    description: "An interactive U.S. housing affordability map. Explore estimated home prices, monthly payments, and the income needed by state and place, then customize the math on Home Payment Atlas.",
+    title: "U.S. Housing Affordability Map & State Comparisons | Housing Atlas",
+    description: "Explore a U.S. housing affordability map using Zillow home values and Census incomes. Compare states, mortgage-payment estimates, income needed and rental context.",
     jsonld: [{
       "@context": "https://schema.org", "@type": "WebApplication",
       name: SITE.name, url: SITE.origin + "/",
@@ -738,7 +852,7 @@ function buildHome() {
         values with income context. Open a state for county and city detail, or change the controls
         above to explore starter homes, family homes, income needed, or rent.</p>
       ${stateTable(pre, { limit: 10 })}
-      <p><a class="textlink" href="${pre}rankings/most-affordable-states/index.html">See the full state ranking →</a></p>
+      <p class="directory-cta"><a class="textlink" href="${pre}rankings/most-affordable-states/index.html">See all states by affordability rank →</a> <a class="textlink" href="${pre}states/index.html">Browse the 50-state and DC directory →</a></p>
     </section>
 
     ${ad("incontent")}
@@ -773,8 +887,8 @@ function buildMapPages() {
     },
     {
       url: "map/rent-burden/index.html", mode: "rent-burden",
-      h1: "Rent Burden Map — by State",
-      title: "Rent Affordability & Rent Burden by State | Housing Affordability Atlas",
+      h1: "State Rent-to-Income Map (Census ACS Proxy)",
+      title: "State Rent-to-Income Map: ACS Gross Rent Proxy",
       desc: "Map of illustrative rent-to-income ratios using Census ACS median gross rent and general household income where Zillow ZORI is missing. See where renting consumes the largest share of a paycheck.",
       intro: "This view maps a rent-to-income proxy: Census ACS median gross rent divided by the all-household median income when Zillow ZORI is unavailable. It is not the official Census measure of renter cost burden."
     }
@@ -867,7 +981,7 @@ function buildStatePages() {
     const vsNat = (natMid && e.scenarioPrice) ? Math.round(((e.scenarioPrice - natMid) / natMid) * 100) : null;
     const places = PLACES.filter((p) => p.stateAbbr === abbr);
     const url = `states/${s.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
+    const trail = [["index.html", "Home"], ["states/index.html", "States"], [url, s.name]];
     const rentBurdenPct = e.rentBurden != null ? e.rentBurden : null;
     const increasedRate = HAM.payment(e.scenarioPrice, { interestRate: A.interestRate + 0.01 });
     const twentyDown = HAM.payment(e.scenarioPrice, { downPaymentPct: 0.20 });
@@ -902,8 +1016,8 @@ function buildStatePages() {
     ];
     const meta = {
       url,
-      title: `${s.name} Housing Affordability — Home Values, Income Needed & Rankings`,
-      description: `${s.name} housing affordability: typical home value ${money(e.scenarioPrice)}, est. payment ${money(e.monthlyPayment)}/mo, income needed ${money(e.incomeNeeded)}. Zillow + Census data, county rankings, and a payment calculator.`,
+      title: `${s.name} Housing Affordability: Home Prices & Income Needed`,
+      description: `${s.name} affordability (Zillow ZHVI ${ZVINTAGE || "source"}): middle-tier home ${money(e.scenarioPrice)}, modeled payment ${money(e.monthlyPayment)}/mo, and ${money(e.incomeNeeded)} annual income needed. Compare starter and 3-bedroom homes.`,
       jsonld: [breadcrumbJsonLd(trail), faqJsonLd(faqs),
         { "@context": "https://schema.org", "@type": "Dataset",
           name: `${s.name} housing affordability estimates`,
@@ -997,6 +1111,7 @@ function buildStatePages() {
             return ns ? `<li><a href="${pre}states/${ns.slug}/index.html">${esc(ns.name)}</a></li>` : "";
           }).join("")}
           <li><a href="${pre}rankings/most-affordable-states/index.html">All states ranked</a></li>
+          <li><a href="${pre}states/index.html">Browse all state profiles</a></li>
         </ul>
       </section>
 
@@ -1254,12 +1369,42 @@ const SIGNAL_COMPONENTS = [
   { name: "Zillow Market Heat Index", what: "lower heat favors buyers", status: "pending" }
 ];
 
+function buildRankingsHub(indexableDefs) {
+  const trail = [["index.html","Home"],["rankings/index.html","Rankings"]];
+  page({
+    url:"rankings/index.html",
+    title:"Housing Affordability Rankings: States, Cities & Home Types",
+    description:"Explore data-backed housing affordability rankings by state, starter home, 3-bedroom home, income needed, and city. Zillow ZHVI and Census ACS sources.",
+    jsonld:[breadcrumbJsonLd(trail)]
+  },(pre)=>`
+    <div class="wrap">
+      ${breadcrumbs(pre,trail)}
+      <section class="section ranking-hub">
+        <h1>Housing affordability rankings</h1>
+        <p class="lede">Different budgets tell different stories. Compare states by the modeled monthly payment and income needed, discover starter and 3-bedroom home markets, or explore city rankings based on measured home values and incomes.</p>
+        <p class="source-strip">Home values: Zillow Research ZHVI ${esc(ZVINTAGE || "vintage unavailable")}. Income: U.S. Census ${esc(CVINTAGE || "vintage unavailable")}. These rankings are educational calculations, not listings, appraisals, or lender quotes.</p>
+        <div class="feature-grid ranking-hub-grid">
+          ${indexableDefs.map(d=>`<a class="feature" href="${pre}rankings/${d.slug}/">
+            <h2>${esc(d.h1)}</h2><p>${esc(d.intro)}</p>
+            <span class="ranking-hub-more">Explore this ranking →</span>
+          </a>`).join("")}
+        </div>
+      </section>
+      <section class="section state-directory-guidance">
+        <h2>Which housing ranking should you use?</h2>
+        <p><strong>Home values</strong> describe Zillow's market tier estimates, not current listing prices. <strong>Buying affordability</strong> compares an illustrative mortgage payment to an income benchmark. <strong>Income needed</strong> is a modeled payment divided by a housing-income guideline. These answer different questions and should not be treated as a single universal ranking.</p>
+        <p>For a specific income and two possible destinations, use <a href="${pre}compare/">Compare States</a>. To choose a state alphabetically, open the <a href="${pre}states/">state directory</a>. Review <a href="${pre}methodology/">methodology</a> and <a href="${pre}data-updates/">source dates</a> before making a financial decision.</p>
+      </section>
+      ${disclaimer()}
+    </div>`);
+}
+
 function buildRankingPages() {
   // slug -> short label for cross-linking
   const liveDefs = [
     {
       slug: "most-affordable-states", h1: "Most Affordable States to Buy a Home",
-      title: "Most Affordable States to Buy a Home (2026 Ranking)",
+      title: "Most Affordable States to Buy: Zillow & Census Rankings",
       desc: "The most affordable U.S. states to buy a home, by estimated buying-affordability score combining Zillow home values with income context.",
       intro: "States ranked by estimated buying-affordability score for a mid-tier home — comparing household income with the income needed to buy.",
       methodLine: "Higher scores mean income covers the income needed for a mid-tier Zillow home value more comfortably.",
@@ -1341,7 +1486,9 @@ function buildRankingPages() {
     }
   ];
 
-  const allSlugs = liveDefs.concat(roadmapDefs);
+  const indexableDefs = liveDefs.filter((d) => !d.placeBased || completeCityCount() >= 12);
+  buildRankingsHub(indexableDefs);
+  const allSlugs = indexableDefs;
   const rankingNav = (pre, current) => `<section class="section">
     <h2>Explore more rankings</h2>
     <ul class="pill-links">
@@ -1354,7 +1501,7 @@ function buildRankingPages() {
   // ---- Live, data-backed ranking pages ----
   liveDefs.forEach((dpage) => {
     const url = `rankings/${dpage.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
+    const trail = [["index.html", "Home"], ["rankings/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: "Where does this ranking's data come from?",
         a: "Home values come from Zillow ZHVI; rent: " + RENT_NOTE + ". Home-value vintage:" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
@@ -1399,7 +1546,7 @@ function buildRankingPages() {
   // ---- Data-roadmap (market-signal) ranking pages ----
   roadmapDefs.forEach((dpage) => {
     const url = `rankings/${dpage.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
+    const trail = [["index.html", "Home"], ["rankings/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: `Why isn't the ${dpage.indexName} live yet?`,
         a: "It depends on Zillow market-signal datasets (inventory, price cuts, days to pending, market heat) that are not yet imported. We publish numbers only when the underlying data is in place — no fabricated figures." },
@@ -1410,6 +1557,7 @@ function buildRankingPages() {
     ];
     const meta = {
       url, title: dpage.title + " | Housing Affordability Atlas", description: dpage.desc,
+      noindex: true, // Roadmap only: verified market signals are not yet present.
       jsonld: [breadcrumbJsonLd(trail), faqJsonLd(faqs)]
     };
     page(meta, (pre) => `
