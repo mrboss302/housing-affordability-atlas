@@ -21,7 +21,10 @@ jobs:
           node --check assets/js/affordability.js
           node --check assets/js/map.js
           node --check assets/js/compare.js
+          node --check tools/generate-social-card.js
       - name: Regenerate site from committed research data
         run: node tools/generate.js
       - name: Test source integrity, finance math and publishing quality
         run: node scripts/test-quality.cjs
+      - name: Audit SEO metadata, crawlable links, indexing and social image
+        run: node scripts/test-seo.cjs
