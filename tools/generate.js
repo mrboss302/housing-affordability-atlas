@@ -317,7 +317,7 @@ function page(meta, body, opts) {
   opts = opts || {};
   const pre = prefixFor(meta.url);
   disclaimer._pre = pre;
-  const url = SITE.origin + "/" + meta.url.replace(/index\\.html$/, "");
+  const url = SITE.origin + "/" + meta.url.replace(/index\.html$/, "");
   const websiteLd = meta.url === "index.html"
     ? {
       "@context": "https://schema.org", "@type": "WebSite",
