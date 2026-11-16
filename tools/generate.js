@@ -196,7 +196,7 @@ function footer(pre) {
   <div class="wrap foot-base">
     <p class="foot-atlas">Detailed mortgage and payment math lives on our companion site,
       <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a>.</p>
-    <p class="foot-atlas-src">Home values &amp; rent: Zillow Research. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
+    <p class="foot-atlas-src">Home values: Zillow Research ZHVI (${esc(ZVINTAGE || 'unknown vintage')}). Rent: ${esc(RENT_NOTE)}. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
     <p class="foot-legal">&copy; <span data-year>2026</span> ${SITE.name}. Educational estimates only — not financial, legal, tax, mortgage, or real-estate advice. Verify with official sources.</p>
   </div>
 </footer>
@@ -448,11 +448,11 @@ function placeTable(pre, places, opts) {
       <td><span class="score-pill" data-band="${e.band.key}">${e.score == null ? "—" : e.score}</span></td>
     </tr>`;
   }).join("");
-  const srcBit = ZVINTAGE ? `Zillow ZHVI/ZORI ${ZVINTAGE}, Census ACS` : "Zillow + Census";
+  const srcBit = ZVINTAGE ? `Zillow ZHVI ${ZVINTAGE}, rent: ${RENT_NOTE}, Census ACS` : "Zillow + Census";
   return `<div class="table-wrap"><table class="data-table">
     <caption class="table-caption">${esc(opts.caption || "City affordability — " + srcBit + ".")}</caption>
     <thead><tr><th scope="col">#</th><th scope="col">City</th><th scope="col">Home value</th>
-    <th scope="col">Est. payment</th><th scope="col">Income needed</th><th scope="col">Rent burden</th><th scope="col">Score</th></tr></thead>
+    <th scope="col">Est. payment</th><th scope="col">Income needed</th><th scope="col">Rent-to-income proxy</th><th scope="col">Score</th></tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
 }
@@ -481,7 +481,7 @@ function statCards(e, labels) {
     ${c("Estimated monthly payment", money(e.monthlyPayment), "Principal, interest, taxes, insurance, PMI")}
     ${c("Estimated income needed", money(e.incomeNeeded), "So housing ≤ 28% of income")}
     ${c("Affordability score", e.score == null ? "—" : e.score + " / 100", e.band.label)}
-    ${c("Estimated rent burden", pct(e.rentBurden), "Median rent ÷ median income")}
+    ${c("Estimated rent-to-income proxy", pct(e.rentBurden), "Median gross rent ÷ all-household median income")}
   </div>`;
 }
 
@@ -714,7 +714,7 @@ function buildStatePages() {
           ? `${rentVsBuyText} This comparison is directional — actual costs depend on your specific down payment, loan terms, property taxes, insurance, and HOA. Run the full math on <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a>.`
           : `Compare the estimated monthly ownership cost (${money(e.monthlyPayment)}) to local rents to gauge the gap. Use <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas</a> to model your specific scenario.` },
       { q: `Where do these ${s.name} numbers come from?`,
-        a: `Home values are Zillow Research ZHVI${ZVINTAGE ? ` (${ZVINTAGE})` : ""}; rent is the Zillow ZORI index; income is ${incomeLabel}. They are estimates for comparison, not appraisals. Customize the mortgage math on the <a href="${HAM.atlasStateUrl(abbr)}" rel="noopener">${s.name} page on Home Payment Atlas</a>.` }
+        a: `Home values are Zillow Research ZHVI${ZVINTAGE ? ` (${ZVINTAGE})` : ""}; rent: ${rentSourceFor(e)}; income is ${incomeLabel}. They are estimates for comparison, not appraisals. Customize the mortgage math on the <a href="${HAM.atlasStateUrl(abbr)}" rel="noopener">${s.name} page on Home Payment Atlas</a>.` }
     ];
     const meta = {
       url,
@@ -766,7 +766,7 @@ function buildStatePages() {
         <h2>Cities in ${esc(s.name)}</h2>
         <p>Major ${esc(s.name)} cities ranked by estimated buying-affordability score, using Zillow city
           home values and Census city income.</p>
-        ${placeTable(pre, places, { caption: `${s.name} city affordability — Zillow ZHVI/ZORI${ZVINTAGE ? ", " + ZVINTAGE : ""} and Census ACS.` })}
+        ${placeTable(pre, places, { caption: `${s.name} city affordability — Zillow ZHVI${ZVINTAGE ? ", " + ZVINTAGE : ""}, rent: ${RENT_NOTE}, Census ACS.` })}
       </section>
 
       ${ad("incontent")}
@@ -786,7 +786,7 @@ function buildStatePages() {
           <li>Affordability rank: <strong>${rank} of ${total} states</strong> (${e.band.label.toLowerCase()} — score ${e.score}/100)</li>
           ${vsNat != null ? `<li>Typical home value is <strong>${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"}</strong> the cross-state median (${money(natMid)})</li>` : ""}
           ${incomeVal ? `<li>Median household income: <strong>${money(incomeVal)}</strong>${e.provenance.income === "census" ? " (Census ACS)" : " (illustrative)"}</li>` : ""}
-          ${rentBurdenPct != null ? `<li>Estimated rent burden: <strong>${rentBurdenPct}%</strong> of median income goes to median rent${rentBurdenPct > 30 ? " — above the 30% cost-burdened threshold" : " — below the 30% cost-burdened threshold"}</li>` : ""}
+          ${rentBurdenPct != null ? `<li>Estimated rent-to-income proxy: <strong>${rentBurdenPct}%</strong> of median income goes to median rent${rentBurdenPct > 30 ? " — above the 30% cost-burdened threshold" : " — below the 30% cost-burdened threshold"}</li>` : ""}
           <li>Starter home income needed: <strong>${money(eStarter.incomeNeeded)}</strong> vs. family home: <strong>${money(eFamily.incomeNeeded)}</strong></li>
         </ul>
       </section>
@@ -854,7 +854,7 @@ function buildPlacePages() {
       { q: `Is it cheaper to rent or buy in ${p.name}?`,
         a: `${rentVsBuy}Rent-vs-buy depends on how long you stay, your down payment, and maintenance. Compare scenarios on the <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas calculator</a>.` },
       { q: `Where do these ${p.name} figures come from?`,
-        a: `${hasHome ? "Home value and rent are from Zillow Research (ZHVI/ZORI" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "). " : "Rent is from Zillow Research (ZORI). "}Income and population are from the U.S. Census Bureau (ACS 5-year ${CENSUS ? "2023" : ""}). They are estimates for comparison, not appraisals. Zillow does not endorse this site.` }
+        a: `${hasHome ? "Home value comes from Zillow Research ZHVI" + (ZVINTAGE ? " (" + ZVINTAGE + "). " : ". ") : "Rent source is " + rentSourceFor(e) + ". "}Income and population are from the U.S. Census Bureau (ACS 5-year ${CENSUS ? "2023" : ""}). They are estimates for comparison, not appraisals. Zillow does not endorse this site.` }
     ];
     const meta = {
       url,
@@ -882,7 +882,7 @@ function buildPlacePages() {
           ${naCard("Estimated home value", "County-level Zillow ZHVI not published")}
           ${naCard("Estimated monthly payment", "Needs a home value")}
           <div class="stat-card"><span class="stat-k">Median household income</span><span class="stat-v">${money(e.region.income.value)}</span><span class="stat-note">U.S. Census ACS</span></div>
-          <div class="stat-card"><span class="stat-k">Median rent</span><span class="stat-v">${e.region.rent.value != null ? money(e.region.rent.value) + "/mo" : "—"}</span><span class="stat-note">Zillow ZORI</span></div>
+          <div class="stat-card"><span class="stat-k">Median gross rent</span><span class="stat-v">${e.region.rent.value != null ? money(e.region.rent.value) + "/mo" : "—"}</span><span class="stat-note">${esc(rentSourceFor(e))}</span></div>
           <div class="stat-card"><span class="stat-k">Population</span><span class="stat-v">${e.region.population != null ? e.region.population.toLocaleString("en-US") : "—"}</span><span class="stat-note">U.S. Census ACS</span></div>
         </div>`;
 
@@ -930,7 +930,7 @@ function placeSourceStrip(e) {
   const bits = [];
   if (e.provenance.homeValue === "zillow") bits.push(`Home value: Zillow ZHVI${ZVINTAGE ? ", " + ZVINTAGE : ""}`);
   if (e.provenance.rent !== "none") bits.push("Rent: " + rentSourceFor(e));
-  if (e.provenance.income === "census") bits.push("Income & population: U.S. Census ACS 2023");
+  if (e.provenance.income === "census") bits.push("Income & population: U.S. Census " + CVINTAGE);
   return `<p class="source-strip">Sources — ${bits.join(" · ")}. Zillow does not endorse this site.</p>`;
 }
 
@@ -1044,7 +1044,7 @@ function rentTable(pre, opts) {
   return `<div class="table-wrap"><table class="data-table">
     <caption class="table-caption">Illustrative rent-to-income ratio by state — ${esc(RENT_NOTE)} divided by all-household median income. This is not the official Census renter cost-burden statistic.</caption>
     <thead><tr><th scope="col">#</th><th scope="col">State</th><th scope="col">Est. rent</th>
-    <th scope="col">Income</th><th scope="col">Rent burden</th></tr></thead>
+    <th scope="col">Income</th><th scope="col">Rent-to-income proxy</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 
@@ -1106,7 +1106,7 @@ function buildRankingPages() {
       intro: "Major U.S. cities ranked by estimated buying-affordability score, using Zillow city-level home values (ZHVI) and Census city income.",
       methodLine: "Each city combines its Zillow mid-tier home value with Census income and the standard mortgage assumptions.",
       placeBased: true,
-      table: (pre) => placeTable(pre, PLACES, { layer: "median", caption: "Most affordable cities to buy — Zillow ZHVI/ZORI and Census ACS." })
+      table: (pre) => placeTable(pre, PLACES, { layer: "median", caption: "Most affordable cities to buy — Zillow ZHVI and Census ACS." })
     },
     {
       slug: "best-places-for-first-time-buyers", h1: "Best Cities for First-Time Buyers",
@@ -1159,7 +1159,7 @@ function buildRankingPages() {
     const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: "Where does this ranking's data come from?",
-        a: "Home values and rent are from Zillow Research (ZHVI/ZORI)" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
+        a: "Home values come from Zillow ZHVI; rent: " + RENT_NOTE + ". Home-value vintage:" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
       { q: "How is the ranking calculated?",
         a: dpage.methodLine + " Full details are on the <a href=\"../../methodology/index.html\">methodology page</a>." },
       { q: "How do I adjust the assumptions?",
