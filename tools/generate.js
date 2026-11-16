@@ -147,7 +147,8 @@ function header(pre) {
     </button>
     <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
       ${link("map/index.html", "Map")}
-      ${link("compare/index.html", "Compare states")}
+      ${link("states/index.html", "States")}
+      ${link("compare/index.html", "Compare")}
       ${link("rankings/most-affordable-states/index.html", "Rankings")}
       ${link("income/75000/index.html", "By income")}
       ${link("methodology/index.html", "Methodology")}
@@ -184,6 +185,7 @@ function footer(pre) {
       ["income/150000/index.html", "On $150,000"]
     ])}
     ${col("States", [
+      ["states/index.html", "All 50 states + DC"],
       ["states/maryland/index.html", "Maryland"],
       ["states/virginia/index.html", "Virginia"],
       ["states/pennsylvania/index.html", "Pennsylvania"]
@@ -738,8 +740,8 @@ function buildHome() {
   const url = "index.html";
   const meta = {
     url,
-    title: "Housing Affordability Atlas — Explore Where Housing May Still Be Affordable",
-    description: "An interactive U.S. housing affordability map. Explore estimated home prices, monthly payments, and the income needed by state and place, then customize the math on Home Payment Atlas.",
+    title: "U.S. Housing Affordability Map & State Comparisons | Housing Atlas",
+    description: "Explore a U.S. housing affordability map using Zillow home values and Census incomes. Compare states, mortgage-payment estimates, income needed and rental context.",
     jsonld: [{
       "@context": "https://schema.org", "@type": "WebApplication",
       name: SITE.name, url: SITE.origin + "/",
@@ -800,7 +802,7 @@ function buildHome() {
         values with income context. Open a state for county and city detail, or change the controls
         above to explore starter homes, family homes, income needed, or rent.</p>
       ${stateTable(pre, { limit: 10 })}
-      <p><a class="textlink" href="${pre}rankings/most-affordable-states/index.html">See the full state ranking →</a></p>
+      <p class="directory-cta"><a class="textlink" href="${pre}rankings/most-affordable-states/index.html">See all states by affordability rank →</a> <a class="textlink" href="${pre}states/index.html">Browse the 50-state and DC directory →</a></p>
     </section>
 
     ${ad("incontent")}
@@ -835,8 +837,8 @@ function buildMapPages() {
     },
     {
       url: "map/rent-burden/index.html", mode: "rent-burden",
-      h1: "Rent Burden Map — by State",
-      title: "Rent Affordability & Rent Burden by State | Housing Affordability Atlas",
+      h1: "State Rent-to-Income Map (Census ACS Proxy)",
+      title: "State Rent-to-Income Map: ACS Gross Rent Proxy",
       desc: "Map of illustrative rent-to-income ratios using Census ACS median gross rent and general household income where Zillow ZORI is missing. See where renting consumes the largest share of a paycheck.",
       intro: "This view maps a rent-to-income proxy: Census ACS median gross rent divided by the all-household median income when Zillow ZORI is unavailable. It is not the official Census measure of renter cost burden."
     }
@@ -964,8 +966,8 @@ function buildStatePages() {
     ];
     const meta = {
       url,
-      title: `${s.name} Housing Affordability — Home Values, Income Needed & Rankings`,
-      description: `${s.name} housing affordability: typical home value ${money(e.scenarioPrice)}, est. payment ${money(e.monthlyPayment)}/mo, income needed ${money(e.incomeNeeded)}. Zillow + Census data, county rankings, and a payment calculator.`,
+      title: `${s.name} Housing Affordability: Home Prices & Income Needed`,
+      description: `${s.name} affordability (Zillow ZHVI ${ZVINTAGE || "source"}): middle-tier home ${money(e.scenarioPrice)}, modeled payment ${money(e.monthlyPayment)}/mo, and ${money(e.incomeNeeded)} annual income needed. Compare starter and 3-bedroom homes.`,
       jsonld: [breadcrumbJsonLd(trail), faqJsonLd(faqs),
         { "@context": "https://schema.org", "@type": "Dataset",
           name: `${s.name} housing affordability estimates`,
@@ -1059,6 +1061,7 @@ function buildStatePages() {
             return ns ? `<li><a href="${pre}states/${ns.slug}/index.html">${esc(ns.name)}</a></li>` : "";
           }).join("")}
           <li><a href="${pre}rankings/most-affordable-states/index.html">All states ranked</a></li>
+          <li><a href="${pre}states/index.html">Browse all state profiles</a></li>
         </ul>
       </section>
 
@@ -1321,7 +1324,7 @@ function buildRankingPages() {
   const liveDefs = [
     {
       slug: "most-affordable-states", h1: "Most Affordable States to Buy a Home",
-      title: "Most Affordable States to Buy a Home (2026 Ranking)",
+      title: "Most Affordable States to Buy: Zillow & Census Rankings",
       desc: "The most affordable U.S. states to buy a home, by estimated buying-affordability score combining Zillow home values with income context.",
       intro: "States ranked by estimated buying-affordability score for a mid-tier home — comparing household income with the income needed to buy.",
       methodLine: "Higher scores mean income covers the income needed for a mid-tier Zillow home value more comfortably.",
