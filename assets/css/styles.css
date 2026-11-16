@@ -103,7 +103,7 @@ p { margin: 0 0 1em; }
 .nav-toggle { display: none; flex-direction: column; gap: 4px; background: none; border: 1px solid var(--line-2); border-radius: 8px; padding: 9px 10px; cursor: pointer; }
 .nav-toggle span { width: 20px; height: 2px; background: var(--ink); border-radius: 2px; }
 
-@media (max-width: 760px) {
+@media (max-width: 1040px) {
   .nav-toggle { display: flex; }
   .primary-nav {
     position: absolute; top: 62px; left: 0; right: 0;
@@ -513,4 +513,22 @@ p { margin: 0 0 1em; }
   .compare-list dd { font-size: .82rem; }
   .compare-list dt { font-size: .81rem; }
   .compare-amount strong { font-size: 2.1rem; }
+}
+
+/* Search and human navigation: browse every state, not only map SVG pins. */
+.state-directory-hero { padding: clamp(24px,4vw,44px) 0 10px; }
+.state-directory-hero .eyebrow { color: var(--brand-dark); font-size: .79rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.state-directory-hero .lede { max-width: 76ch; }
+.state-directory-actions, .directory-cta { display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; }
+.state-directory-actions { margin-top: 20px; }
+.state-directory-table th[scope="row"] { text-align: left; font-weight: 700; }
+.state-directory-table th[scope="row"] a { display: inline-block; min-height: 34px; padding: 5px 0; }
+.state-directory-table td { font-variant-numeric: tabular-nums; }
+.state-directory-guidance { max-width: 85ch; }
+.state-directory-guidance p { color: var(--ink-2); line-height: 1.8; }
+.directory-cta { padding: 12px 0; }
+@media (max-width: 570px) {
+  .state-directory-table { font-size: .8rem; }
+  .state-directory-table th, .state-directory-table td { padding: 9px 7px; }
+  .state-directory-actions .btn { width: 100%; }
 }
