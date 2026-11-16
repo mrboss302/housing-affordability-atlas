@@ -874,6 +874,16 @@ function buildStatePages() {
     const url = `states/${s.slug}/index.html`;
     const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
     const rentBurdenPct = e.rentBurden != null ? e.rentBurden : null;
+    const increasedRate = HAM.payment(e.scenarioPrice, { interestRate: A.interestRate + 0.01 });
+    const twentyDown = HAM.payment(e.scenarioPrice, { downPaymentPct: 0.20 });
+    const extraDown = twentyDown && e.payment ? twentyDown.downPayment - e.payment.downPayment : null;
+    const monthlyDownSavings = twentyDown && e.payment ? e.payment.total - twentyDown.total : null;
+    const increasedMonthly = increasedRate && e.payment ? increasedRate.total - e.payment.total : null;
+    const financeSensitivity = e.payment && increasedRate && twentyDown ? [
+      { title: "Default example: " + pp(A.downPaymentPct * 100) + "% down", rate: pp(A.interestRate * 100) + "%", payment: e.payment.total, down: e.payment.downPayment, pmi: e.payment.pmi },
+      { title: "Larger down payment: 20% down", rate: pp(A.interestRate * 100) + "%", payment: twentyDown.total, down: twentyDown.downPayment, pmi: twentyDown.pmi },
+      { title: "Rate +1 percentage point", rate: pp((A.interestRate + 0.01) * 100) + "%", payment: increasedRate.total, down: increasedRate.downPayment, pmi: increasedRate.pmi }
+    ] : [];
     const rentVsBuyGap = (e.monthlyPayment && e.region.rent && e.region.rent.value)
       ? Math.round(e.monthlyPayment - e.region.rent.value) : null;
     const rentVsBuyText = rentVsBuyGap != null
@@ -929,6 +939,16 @@ function buildStatePages() {
           ${money(eStarter.scenarioPrice)} (income needed ~${money(eStarter.incomeNeeded)}); a 3-bedroom
           family home about ${money(eFamily.scenarioPrice)} (income needed ~${money(eFamily.incomeNeeded)}).</p>
         ${sourceStrip()}
+      </section>
+
+      <section class="section">
+        <h2>What changes with a larger down payment or higher mortgage rate?</h2>
+        <p>For the Zillow middle-tier ${esc(s.name)} home (${money(e.scenarioPrice)}), the scenarios below hold modeled property tax and insurance constant. Using 20% down instead of the default ${pp(A.downPaymentPct * 100)}% down reduces the estimated payment by about <strong>${money(monthlyDownSavings)} per month</strong>, but increases the initial down payment by <strong>${money(extraDown)}</strong>, before closing costs. A rate one percentage point higher would increase the default estimated payment by about <strong>${money(increasedMonthly)} per month</strong>.</p>
+        <div class="table-wrap"><table class="data-table"><caption class="table-caption">Illustrative ${esc(s.name)} financing sensitivity, ${ZVINTAGE ? "Zillow ZHVI " + ZVINTAGE : "source month not available"}. Not current interest-rate quotes.</caption>
+          <thead><tr><th scope="col">Scenario</th><th scope="col">Rate</th><th scope="col">Payment/mo</th><th scope="col">Down payment</th><th scope="col">PMI/mo</th></tr></thead>
+          <tbody>${financeSensitivity.map(x => `<tr><td>${esc(x.title)}</td><td>${x.rate}</td><td>${money(x.payment)}</td><td>${money(x.down)}</td><td>${money(x.pmi)}</td></tr>`).join("")}</tbody>
+        </table></div>
+        <p class="muted">The loan model assumes ${A.loanTermYears} years, ${pp(A.propertyTaxRate * 100)}% annual property tax, ${pp(A.insuranceRate * 100)}% insurance, and ${pp(A.pmiRate * 100)}% annual PMI on loans with less than 20% down. Real costs differ. Compare your household's income and another state in <a href="${pre}compare/index.html?a=${s.abbr}">Compare States</a>.</p>
       </section>
 
       <section class="section">
