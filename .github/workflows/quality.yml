@@ -1,0 +1,27 @@
+name: Quality and calculation regressions
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify JavaScript syntax
+        run: |
+          node --check tools/generate.js
+          node --check assets/js/affordability.js
+          node --check assets/js/map.js
+          node --check assets/js/compare.js
+      - name: Regenerate site from committed research data
+        run: node tools/generate.js
+      - name: Test source integrity, finance math and publishing quality
+        run: node scripts/test-quality.cjs
