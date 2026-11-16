@@ -296,9 +296,13 @@
       H.money(e.monthlyPayment) + "/month, which typically calls for an income near " +
       H.money(e.incomeNeeded) + ". The score compares " + incomeText + " with that income needed.";
 
-    var prov = '<p class="panel-prov">Home value &amp; rent: Zillow Research' +
+    var rentSource = e.provenance.rent === "zillow" ? "Zillow ZORI" :
+      e.provenance.rent === "census" ? "U.S. Census ACS median gross rent" : "No verified rent observation";
+    var prov = '<p class="panel-prov">Home value: Zillow Research ZHVI' +
       (w.HAM_MARKET && w.HAM_MARKET.vintage ? " (" + w.HAM_MARKET.vintage + ")" : "") +
-      ". Income: " + (e.provenance.income === "census" ? "U.S. Census ACS" : "illustrative estimate") + ".</p>";
+      ". Rent: " + rentSource + ". Income: " +
+      (e.provenance.income === "census" ? "U.S. Census ACS" : "Not available") +
+      ". Rent-to-income is a proxy, not the official renter burden measure.</p>";
 
     this.panelEl.innerHTML =
       '<div class="panel-head"><h3 id="panel-title">' + s.name + '</h3>' +
