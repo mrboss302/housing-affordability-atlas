@@ -541,15 +541,15 @@ function buildHome() {
       <h2>A market-discovery map, not a listings site</h2>
       <p>Most housing sites show you individual listings. This one shows you the <em>landscape</em>:
         which states and markets are within reach for a given income, where rent eats the most of a
-        paycheck, and where starter homes are still attainable. Home values and rents come from
-        <strong>Zillow Research</strong> (ZHVI and ZORI); income and geography come from the
-        <strong>U.S. Census Bureau</strong>. When you find a market worth a closer look, continue to
+        paycheck, and where starter homes are still attainable. Home values come from <strong>Zillow Research</strong> (ZHVI), while rent is taken
+        from ${esc(RENT_NOTE)}. Household income and geography come from the
+        <strong>U.S. Census Bureau</strong>.  When you find a market worth a closer look, continue to
         <a href="${A.atlas.home}" rel="noopener">Home Payment Atlas</a> to customize down payment,
         taxes, PMI, insurance, and HOA.</p>
       <div class="feature-grid">
         <a class="feature" href="${pre}map/buying-affordability/index.html"><h3>Buying affordability</h3><p>How far an income stretches toward a median or starter home, by state.</p></a>
         <a class="feature" href="${pre}map/income-needed/index.html"><h3>Income needed</h3><p>The household income typically required to buy a mid-tier home.</p></a>
-        <a class="feature" href="${pre}map/rent-burden/index.html"><h3>Rent affordability</h3><p>Zillow rent as a share of income — where renting pressures budgets most.</p></a>
+        <a class="feature" href="${pre}map/rent-burden/index.html"><h3>Rent affordability</h3><p>Census ACS median gross rent divided by general median household income: an illustrative pressure proxy, not an official burden rate.</p></a>
         <a class="feature" href="${pre}rankings/most-affordable-starter-home-markets/index.html"><h3>Starter homes</h3><p>Markets where entry-level (bottom-tier) homes are most attainable.</p></a>
       </div>
     </section>
@@ -601,8 +601,8 @@ function buildMapPages() {
       url: "map/rent-burden/index.html", mode: "rent-burden",
       h1: "Rent Burden Map — by State",
       title: "Rent Affordability & Rent Burden by State | Housing Affordability Atlas",
-      desc: "Map of estimated rent burden — Zillow rent index as a share of household income — across U.S. states. See where renting consumes the largest share of a paycheck.",
-      intro: "This view maps estimated rent burden: the Zillow Observed Rent Index (state value = median of city ZORI) as a percentage of household income. Above ~30% is generally considered rent burdened."
+      desc: "Map of illustrative rent-to-income ratios using Census ACS median gross rent and general household income where Zillow ZORI is missing. See where renting consumes the largest share of a paycheck.",
+      intro: "This view maps a rent-to-income proxy: Census ACS median gross rent divided by the all-household median income when Zillow ZORI is unavailable. It is not the official Census measure of renter cost burden."
     }
   ];
   defs.forEach((dpage) => {
@@ -929,7 +929,7 @@ function buildPlacePages() {
 function placeSourceStrip(e) {
   const bits = [];
   if (e.provenance.homeValue === "zillow") bits.push(`Home value: Zillow ZHVI${ZVINTAGE ? ", " + ZVINTAGE : ""}`);
-  if (e.provenance.rent === "zillow") bits.push("Rent: Zillow ZORI");
+  if (e.provenance.rent !== "none") bits.push("Rent: " + rentSourceFor(e));
   if (e.provenance.income === "census") bits.push("Income & population: U.S. Census ACS 2023");
   return `<p class="source-strip">Sources — ${bits.join(" · ")}. Zillow does not endorse this site.</p>`;
 }
@@ -1028,7 +1028,7 @@ function placeTableFromStates(pre, rows, income) {
     <tbody>${body}</tbody></table></div>`;
 }
 
-// Crawlable state rent-burden table (Zillow ZORI rent vs income), worst first.
+// Crawlable rent-to-income proxy table; rent source is explicit.
 function rentTable(pre, opts) {
   opts = opts || {};
   let rows = STATES.map((s) => ({ s, e: evalState(s, { layer: "median" }) }))
@@ -1042,7 +1042,7 @@ function rentTable(pre, opts) {
       <td>${pct(e.rentBurden)}</td></tr>`;
   }).join("");
   return `<div class="table-wrap"><table class="data-table">
-    <caption class="table-caption">Estimated rent burden by state — Zillow ZORI rent ÷ income${ZVINTAGE ? `, ${ZVINTAGE}` : ""}. Above ~30% is considered rent burdened.</caption>
+    <caption class="table-caption">Illustrative rent-to-income ratio by state — ${esc(RENT_NOTE)} divided by all-household median income. This is not the official Census renter cost-burden statistic.</caption>
     <thead><tr><th scope="col">#</th><th scope="col">State</th><th scope="col">Est. rent</th>
     <th scope="col">Income</th><th scope="col">Rent burden</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
@@ -1094,9 +1094,9 @@ function buildRankingPages() {
     {
       slug: "most-rent-burdened-markets", h1: "Most Rent-Burdened States",
       title: "Most Rent-Burdened States (Rent vs Income)",
-      desc: "States where rent consumes the largest share of income, using the Zillow rent index against household income.",
-      intro: "States ranked by estimated rent burden — Zillow rent as a share of income. This captures rent-vs-income pressure, where renting strains budgets most.",
-      methodLine: "Rent burden is the Zillow ZORI rent index (state = median of city ZORI) divided by income, annualized.",
+      desc: "States ranked by an illustrative Census ACS rent-to-income ratio, not an official renter cost-burden rate.",
+      intro: "States ranked by illustrative rent-to-income pressure using available verified rent and income sources. This ratio cannot establish the share of renter households that are cost burdened.",
+      methodLine: "The ratio divides median gross rent by overall median household income, annualized. It is not the official Census renter cost-burden statistic; renters may have very different incomes from the overall median.",
       table: (pre) => rentTable(pre, {})
     },
     {
@@ -1405,7 +1405,7 @@ function buildInfoPages() {
       Research, U.S. Census Bureau) plus standard mortgage assumptions. They are illustrations, not quotes,
       appraisals, or guarantees.</p>
     <h2>Data attribution</h2>
-    <p>Home values and rent are from Zillow Research; income, population, and geography from the U.S. Census
+    <p>Home values are Zillow Research ZHVI; rent comes from ${esc(RENT_NOTE)}. Income, population, and geography come from U.S. Census
       Bureau. Zillow does not endorse this site, and this data is not official government data where Zillow
       is the source. We use only aggregate research datasets — not listings or individual property details.</p>
     <h2>Not professional advice</h2>
