@@ -147,6 +147,7 @@ function header(pre) {
     </button>
     <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
       ${link("map/index.html", "Map")}
+      ${link("compare/index.html", "Compare states")}
       ${link("rankings/most-affordable-states/index.html", "Rankings")}
       ${link("income/75000/index.html", "By income")}
       ${link("methodology/index.html", "Methodology")}
@@ -173,7 +174,8 @@ function footer(pre) {
       ["rankings/most-affordable-states/index.html", "Most affordable states"],
       ["rankings/most-affordable-places-to-buy/index.html", "Most affordable places"],
       ["rankings/lowest-income-needed/index.html", "Lowest income needed"],
-      ["rankings/best-places-for-first-time-buyers/index.html", "First-time buyers"]
+      ["rankings/best-places-for-first-time-buyers/index.html", "First-time buyers"],
+      ["compare/index.html", "Compare two states"]
     ])}
     ${col("By income", [
       ["income/50000/index.html", "On $50,000"],
@@ -190,7 +192,8 @@ function footer(pre) {
       ["about/index.html", "About"],
       ["methodology/index.html", "Methodology"],
       ["privacy/index.html", "Privacy"],
-      ["terms/index.html", "Terms & disclaimer"]
+      ["terms/index.html", "Terms & disclaimer"],
+      ["data-updates/index.html", "Data coverage and updates"]
     ])}
   </div>
   <div class="wrap foot-base">
@@ -699,7 +702,8 @@ function buildHome() {
         run the detailed payment math.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="${pre}map/index.html">Open the affordability map</a>
-        <a class="btn" href="${pre}rankings/most-affordable-states/index.html">See most affordable states</a>
+        <a class="btn" href="${pre}compare/index.html">Compare two states</a>
+        <a class="btn btn-ghost" href="${pre}rankings/most-affordable-states/index.html">See state rankings</a>
       </div>
       <p class="hero-flag">Built on ${vint}${CENSUS ? " and U.S. Census ACS income" : ""}. Estimates for comparison, not advice.</p>
     </div>
@@ -724,6 +728,11 @@ function buildHome() {
       </div>
     </section>
 
+    <section class="section feature-compare">
+      <div class="compare-promo"><div><p class="compare-label">An extra way to explore</p><h2>How far does your income go?</h2><p>Choose two states and use the same mortgage assumptions to compare a typical home, modeled monthly payment, annual income needed, and rate sensitivity. Unlike listings, this makes big geographic differences visible.</p></div>
+        <a class="btn btn-primary" href="${pre}compare/index.html">Open state comparison</a>
+      </div>
+    </section>
     ${mapControls(pre)}
     ${mapBlock(pre)}
     ${sourceStrip()}
@@ -907,6 +916,10 @@ function buildStatePages() {
         ${esc(s.name)} ranks <strong>${rank} of ${total}</strong> states for estimated median-home
         affordability${vsNat != null ? `, with typical values about ${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"} the cross-state median` : ""}.</p>
       ${ad("horizontal")}
+      <section class="section">
+        <div class="compare-promo"><div><p class="compare-label">Compare markets</p><h2>How does ${esc(s.name)} compare?</h2><p>Keep the same income and hypothetical loan assumptions while comparing the latest Zillow housing values across two states.</p></div>
+        <a class="btn btn-primary" href="${pre}compare/index.html?a=${s.abbr}">Compare ${esc(s.name)}</a></div>
+      </section>
       <section class="section">
         <h2>${esc(s.name)} affordability summary</h2>
         ${statCards(e, { priceNote: "Zillow mid-tier ZHVI" })}
