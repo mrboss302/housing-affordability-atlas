@@ -786,7 +786,7 @@ function buildStatePages() {
           <li>Affordability rank: <strong>${rank} of ${total} states</strong> (${e.band.label.toLowerCase()} — score ${e.score}/100)</li>
           ${vsNat != null ? `<li>Typical home value is <strong>${Math.abs(vsNat)}% ${vsNat >= 0 ? "above" : "below"}</strong> the cross-state median (${money(natMid)})</li>` : ""}
           ${incomeVal ? `<li>Median household income: <strong>${money(incomeVal)}</strong>${e.provenance.income === "census" ? " (Census ACS)" : " (illustrative)"}</li>` : ""}
-          ${rentBurdenPct != null ? `<li>Estimated rent-to-income proxy: <strong>${rentBurdenPct}%</strong> of median income goes to median rent${rentBurdenPct > 30 ? " — above the 30% cost-burdened threshold" : " — below the 30% cost-burdened threshold"}</li>` : ""}
+          ${rentBurdenPct != null ? `<li>Rent-to-income proxy: <strong>${rentBurdenPct}%</strong> (median gross rent divided by all-household median income), not the renter-specific Census cost-burden statistic.</li>` : ""}
           <li>Starter home income needed: <strong>${money(eStarter.incomeNeeded)}</strong> vs. family home: <strong>${money(eFamily.incomeNeeded)}</strong></li>
         </ul>
       </section>
@@ -854,7 +854,7 @@ function buildPlacePages() {
       { q: `Is it cheaper to rent or buy in ${p.name}?`,
         a: `${rentVsBuy}Rent-vs-buy depends on how long you stay, your down payment, and maintenance. Compare scenarios on the <a href="${A.atlas.calculator}" rel="noopener">Home Payment Atlas calculator</a>.` },
       { q: `Where do these ${p.name} figures come from?`,
-        a: `${hasHome ? "Home value comes from Zillow Research ZHVI" + (ZVINTAGE ? " (" + ZVINTAGE + "). " : ". ") : "Rent source is " + rentSourceFor(e) + ". "}Income and population are from the U.S. Census Bureau (ACS 5-year ${CENSUS ? "2023" : ""}). They are estimates for comparison, not appraisals. Zillow does not endorse this site.` }
+        a: `${hasHome ? "Home value comes from Zillow Research ZHVI" + (ZVINTAGE ? " (" + ZVINTAGE + "). " : ". ") : ""}Rent source: ${rentSourceFor(e)}. Household income and population are from the U.S. Census Bureau (${CVINTAGE || "vintage not recorded"}). Rent relative to the general median income is a proxy, not official renter cost burden. Figures are estimates, not appraisals. Zillow does not endorse this site.` }
     ];
     const meta = {
       url,
