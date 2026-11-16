@@ -64,15 +64,26 @@ const SITE = {
 
 // Honest, per-field data-status note (replaces the old "demo data" wording).
 const ZVINTAGE = (MARKET && MARKET.vintage) ? MARKET.vintage : null;
+const CVINTAGE = (CENSUS && CENSUS.vintage) ? CENSUS.vintage : null;
+const HAS_ZORI = !!(MARKET && MARKET.regions && MARKET.regions.some((r) => Number(r.zori) > 0));
+const RENT_NOTE = HAS_ZORI
+  ? "Zillow ZORI where available, with Census ACS median gross rent for uncovered areas"
+  : CVINTAGE
+    ? "Census ACS median gross rent (" + CVINTAGE + "); the Zillow ZORI fields are unavailable in this dataset"
+    : "no verified rent data";
+const rentSourceFor = (e) => e && e.provenance && e.provenance.rent === "zillow"
+  ? "Zillow ZORI" : e && e.provenance && e.provenance.rent === "census"
+    ? "U.S. Census ACS median gross rent (" + (CVINTAGE || "year not recorded") + ")" : "not available";
 const DATA_NOTE = (function () {
   const home = ZVINTAGE
-    ? "Home values and rents reflect Zillow Research data (ZHVI and ZORI, " + ZVINTAGE + ")."
-    : "Home values and rents are illustrative until the Zillow Research datasets are imported.";
+    ? "Home values are Zillow Research ZHVI (" + ZVINTAGE + "). Rent: " + RENT_NOTE + "."
+    : "Zillow home-value data is currently unavailable; do not use market estimates as verified prices.";
   const inc = CENSUS
     ? "Household income reflects U.S. Census ACS data."
     : "Household income figures are illustrative estimates pending Census ACS import.";
-  return home + " " + inc + " All figures are estimates for general comparison, " +
-    "not appraisals or quotes — confirm details before relying on them.";
+  return home + " " + inc + " Rent relative to the general household median is a proxy, not " +
+    "the Census rent-cost-burden statistic for renter households. All payment figures are modeled " +
+    "planning estimates, not appraisals, quotes, or loan offers.";
 })();
 const SAMPLE_NOTE = DATA_NOTE; // backward-compat alias used by some builders
 
@@ -118,9 +129,7 @@ ${meta.noindex ? '<meta name="robots" content="noindex,follow">\n' : ""}<link re
 <link rel="preconnect" href="https://homepaymentatlas.com">
 <link rel="stylesheet" href="${pre}assets/css/styles.css">
 ${jsonld}
-<!-- Google AdSense loader (publisher ${SITE.adClient}). Enables AdSense site
-     verification and Auto Ads. Individual ad units stay as labeled placeholders
-     until you create units in AdSense and set their numeric slot IDs in ad(). -->
+<!-- Google AdSense account verification only. No empty manual ad placements are rendered. -->
 <meta name="google-adsense-account" content="${SITE.adClient}">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}" crossorigin="anonymous"></script>
 </head>
@@ -212,27 +221,9 @@ function scripts(pre, withMap) {
   return lines.join("\n");
 }
 
-/* Advertisement slot. Reserves space to avoid layout shift; labeled clearly. */
-function ad(variant) {
-  const sizes = {
-    horizontal: "ad-horizontal",
-    incontent: "ad-incontent",
-    sidebar: "ad-sidebar",
-    footer: "ad-footer"
-  };
-  const slot = "1111111111"; // EDIT: replace with the real data-ad-slot ID
-  return `<aside class="ad-slot ${sizes[variant] || "ad-horizontal"}" aria-label="Advertisement">
-  <span class="ad-label">Advertisement</span>
-  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
-  <ins class="adsbygoogle" style="display:block"
-       data-ad-client="${SITE.adClient}"
-       data-ad-slot="${slot}"
-       data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  -->
-  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
-</aside>`;
-}
+/* Unconfigured manual ad units should not occupy the page. Keep the
+ * AdSense account verification in <head>, but do not render fake ads. */
+function ad() { return ""; }
 
 function breadcrumbs(pre, trail) {
   // trail: array of [href|null, label]
@@ -284,9 +275,10 @@ function disclaimer() {
 // Compact inline source/vintage strip for use under data sections.
 function sourceStrip() {
   const bits = [];
-  if (ZVINTAGE) bits.push(`Home values &amp; rent: Zillow Research, ${ZVINTAGE}`);
-  else bits.push("Home values &amp; rent: illustrative (Zillow import pending)");
-  bits.push(CENSUS ? "Income: U.S. Census ACS" : "Income: illustrative (Census import pending)");
+  if (ZVINTAGE) bits.push(`Home values: Zillow ZHVI, ${ZVINTAGE}`);
+  else bits.push("Home values: no verified Zillow observations");
+  bits.push("Rent: " + esc(RENT_NOTE));
+  bits.push(CVINTAGE ? "Income: U.S. Census " + CVINTAGE : "Income: no verified Census observations");
   return `<p class="source-strip">Sources — ${bits.join(" · ")}. Zillow does not endorse this site.</p>`;
 }
 function atlasCta(pre, opts) {
@@ -702,7 +694,7 @@ function buildStatePages() {
     const places = PLACES.filter((p) => p.stateAbbr === abbr);
     const url = `states/${s.slug}/index.html`;
     const trail = [["index.html", "Home"], ["map/index.html", "Map"], [url, s.name]];
-    const rentBurdenPct = e.rentBurden != null ? Math.round(e.rentBurden * 100) : null;
+    const rentBurdenPct = e.rentBurden != null ? e.rentBurden : null;
     const rentVsBuyGap = (e.monthlyPayment && e.region.rent && e.region.rent.value)
       ? Math.round(e.monthlyPayment - e.region.rent.value) : null;
     const rentVsBuyText = rentVsBuyGap != null
@@ -733,7 +725,6 @@ function buildStatePages() {
           name: `${s.name} housing affordability estimates`,
           description: `Estimated home values, monthly payment, income needed, and rent burden for ${s.name}, derived from Zillow Research and U.S. Census data.`,
           creator: { "@type": "Organization", name: SITE.name },
-          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }]
     };
@@ -880,7 +871,6 @@ function buildPlacePages() {
         { "@context": "https://schema.org", "@type": "Dataset",
           name: `${p.name}, ${p.stateAbbr} housing affordability estimates`,
           description: `Home value, payment, income needed, and rent burden for ${p.name}, derived from Zillow Research and U.S. Census data.`,
-          license: "https://creativecommons.org/licenses/by/4.0/",
           isBasedOn: ["https://www.zillow.com/research/data/", "https://www.census.gov/programs-surveys/acs/"],
           url: SITE.origin + "/" + url.replace(/index\.html$/, "") }] : [])
     };
@@ -1438,10 +1428,10 @@ function buildSitemapRobots() {
   const urls = GENERATED.filter((f) => f.endsWith("index.html") && !NOINDEX.has(f))
     .map((f) => SITE.origin + "/" + f.replace(/index\.html$/, ""));
   console.log("[generate] noindex/excluded from sitemap: " + (NOINDEX.size ? Array.from(NOINDEX).join(", ") : "none"));
-  const today = new Date().toISOString().slice(0, 10);
+  // Build dates are not proof that page data or editorial copy changed.
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}
+${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}
 </urlset>
 `;
   write("sitemap.xml", sitemap);
