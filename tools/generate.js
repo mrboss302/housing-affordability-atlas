@@ -159,7 +159,7 @@ function header(pre) {
       ${link("map/index.html", "Map")}
       ${link("states/index.html", "States")}
       ${link("compare/index.html", "Compare")}
-      ${link("rankings/most-affordable-states/index.html", "Rankings")}
+      ${link("rankings/index.html", "Rankings")}
       ${link("income/75000/index.html", "By income")}
       ${link("methodology/index.html", "Methodology")}
       ${link("about/index.html", "About")}
@@ -182,6 +182,7 @@ function footer(pre) {
       ["map/rent-burden/index.html", "Rent burden"]
     ])}
     ${col("Rankings", [
+      ["rankings/index.html", "All housing rankings"],
       ["rankings/most-affordable-states/index.html", "Most affordable states"],
       ["rankings/most-affordable-places-to-buy/index.html", "Most affordable places"],
       ["rankings/lowest-income-needed/index.html", "Lowest income needed"],
@@ -1345,6 +1346,36 @@ const SIGNAL_COMPONENTS = [
   { name: "Zillow Market Heat Index", what: "lower heat favors buyers", status: "pending" }
 ];
 
+function buildRankingsHub(indexableDefs) {
+  const trail = [["index.html","Home"],["rankings/index.html","Rankings"]];
+  page({
+    url:"rankings/index.html",
+    title:"Housing Affordability Rankings: States, Cities & Home Types",
+    description:"Explore data-backed housing affordability rankings by state, starter home, 3-bedroom home, income needed, and city. Zillow ZHVI and Census ACS sources.",
+    jsonld:[breadcrumbJsonLd(trail)]
+  },(pre)=>`
+    <div class="wrap">
+      ${breadcrumbs(pre,trail)}
+      <section class="section ranking-hub">
+        <h1>Housing affordability rankings</h1>
+        <p class="lede">Different budgets tell different stories. Compare states by the modeled monthly payment and income needed, discover starter and 3-bedroom home markets, or explore city rankings based on measured home values and incomes.</p>
+        <p class="source-strip">Home values: Zillow Research ZHVI ${esc(ZVINTAGE || "vintage unavailable")}. Income: U.S. Census ${esc(CVINTAGE || "vintage unavailable")}. These rankings are educational calculations, not listings, appraisals, or lender quotes.</p>
+        <div class="feature-grid ranking-hub-grid">
+          ${indexableDefs.map(d=>`<a class="feature" href="${pre}rankings/${d.slug}/">
+            <h2>${esc(d.h1)}</h2><p>${esc(d.intro)}</p>
+            <span class="ranking-hub-more">Explore this ranking →</span>
+          </a>`).join("")}
+        </div>
+      </section>
+      <section class="section state-directory-guidance">
+        <h2>Which housing ranking should you use?</h2>
+        <p><strong>Home values</strong> describe Zillow's market tier estimates, not current listing prices. <strong>Buying affordability</strong> compares an illustrative mortgage payment to an income benchmark. <strong>Income needed</strong> is a modeled payment divided by a housing-income guideline. These answer different questions and should not be treated as a single universal ranking.</p>
+        <p>For a specific income and two possible destinations, use <a href="${pre}compare/">Compare States</a>. To choose a state alphabetically, open the <a href="${pre}states/">state directory</a>. Review <a href="${pre}methodology/">methodology</a> and <a href="${pre}data-updates/">source dates</a> before making a financial decision.</p>
+      </section>
+      ${disclaimer()}
+    </div>`);
+}
+
 function buildRankingPages() {
   // slug -> short label for cross-linking
   const liveDefs = [
@@ -1432,7 +1463,9 @@ function buildRankingPages() {
     }
   ];
 
-  const allSlugs = liveDefs.concat(roadmapDefs);
+  const indexableDefs = liveDefs.filter((d) => !d.placeBased || completeCityCount() >= 12);
+  buildRankingsHub(indexableDefs);
+  const allSlugs = indexableDefs;
   const rankingNav = (pre, current) => `<section class="section">
     <h2>Explore more rankings</h2>
     <ul class="pill-links">
@@ -1445,7 +1478,7 @@ function buildRankingPages() {
   // ---- Live, data-backed ranking pages ----
   liveDefs.forEach((dpage) => {
     const url = `rankings/${dpage.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
+    const trail = [["index.html", "Home"], ["rankings/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: "Where does this ranking's data come from?",
         a: "Home values come from Zillow ZHVI; rent: " + RENT_NOTE + ". Home-value vintage:" + (ZVINTAGE ? ", " + ZVINTAGE : "") + "; income is from the U.S. Census Bureau" + (CENSUS ? " (ACS 5-year 2023)" : "") + ". Figures are estimates, not appraisals." },
@@ -1490,7 +1523,7 @@ function buildRankingPages() {
   // ---- Data-roadmap (market-signal) ranking pages ----
   roadmapDefs.forEach((dpage) => {
     const url = `rankings/${dpage.slug}/index.html`;
-    const trail = [["index.html", "Home"], ["rankings/most-affordable-states/index.html", "Rankings"], [url, dpage.h1]];
+    const trail = [["index.html", "Home"], ["rankings/index.html", "Rankings"], [url, dpage.h1]];
     const faqs = [
       { q: `Why isn't the ${dpage.indexName} live yet?`,
         a: "It depends on Zillow market-signal datasets (inventory, price cuts, days to pending, market heat) that are not yet imported. We publish numbers only when the underlying data is in place — no fabricated figures." },
@@ -1501,6 +1534,7 @@ function buildRankingPages() {
     ];
     const meta = {
       url, title: dpage.title + " | Housing Affordability Atlas", description: dpage.desc,
+      noindex: true, // Roadmap only: verified market signals are not yet present.
       jsonld: [breadcrumbJsonLd(trail), faqJsonLd(faqs)]
     };
     page(meta, (pre) => `
