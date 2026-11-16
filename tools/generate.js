@@ -528,6 +528,7 @@ function run() {
   buildIncomePages();
   buildRankingPages();
   buildInfoPages();
+  buildNotFoundPage();
   buildSitemapRobots();
   console.log("Generated " + GENERATED.length + " files:");
   GENERATED.forEach((g) => console.log("  " + g));
@@ -759,6 +760,28 @@ function buildStateDirectory() {
         <p>See <a href="${pre}methodology/">how the estimates are calculated</a> and <a href="${pre}data-updates/">the source vintage and coverage report</a>.</p>
       </section>
       ${disclaimer()}
+    </div>`);
+}
+
+function buildNotFoundPage() {
+  page({
+    url: "404.html",
+    title: "Page Not Found | Housing Affordability Atlas",
+    description: "That Housing Affordability Atlas page wasn't found. Use the state directory, maps, rankings and methodology to find the research you're looking for.",
+    noindex: true
+  },(pre)=>`
+    <div class="wrap narrow">
+      <section class="section" aria-labelledby="notfound-heading">
+        <p class="eyebrow">404 · Page not found</p>
+        <h1 id="notfound-heading">This place isn't on the map.</h1>
+        <p class="lede">The address may have changed, or the page may never have existed. Here are a few working paths back into the Atlas.</p>
+        <div class="state-directory-actions">
+          <a class="btn btn-primary" href="${pre}states/">Browse all state profiles</a>
+          <a class="btn" href="${pre}map/">Explore the affordability map</a>
+          <a class="btn" href="${pre}rankings/">Browse rankings</a>
+        </div>
+        <p class="source-strip">For broken internal links or source corrections, please use the public <a href="https://github.com/mrboss302/housing-affordability-atlas/issues/new" rel="noopener">issue tracker</a> without posting personal details.</p>
+      </section>
     </div>`);
 }
 
