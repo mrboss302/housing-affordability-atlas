@@ -78,7 +78,7 @@ jobs:
         run: |
           rm -rf _site && mkdir -p _site
           cp -r assets _site/
-          cp index.html sitemap.xml robots.txt ads.txt _site/ 2>/dev/null || true
+          cp index.html sitemap.xml robots.txt ads.txt 404.html _site/
           for d in map states places income rankings methodology about privacy terms compare data-updates; do
             [ -d "$d" ] && cp -r "$d" _site/
           done
