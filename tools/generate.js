@@ -15,6 +15,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { generate: generateSocialCard } = require("./generate-social-card.js");
 
 const ROOT = path.resolve(__dirname, "..");
 
@@ -123,7 +124,16 @@ ${meta.noindex ? '<meta name="robots" content="noindex,follow">\n' : ""}<link re
 <meta property="og:title" content="${esc(meta.ogTitle || meta.title)}">
 <meta property="og:description" content="${esc(meta.ogDescription || meta.description)}">
 <meta property="og:url" content="${esc(canonical)}">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="${SITE.origin}/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Housing Affordability Atlas name and decorative geographic tiles">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(meta.ogTitle || meta.title)}">
+<meta name="twitter:description" content="${esc(meta.ogDescription || meta.description)}">
+<meta name="twitter:image" content="${SITE.origin}/assets/og-card.png">
 <meta name="theme-color" content="#0f766e">
 <link rel="icon" href="${pre}assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://homepaymentatlas.com">
@@ -307,11 +317,26 @@ function page(meta, body, opts) {
   opts = opts || {};
   const pre = prefixFor(meta.url);
   disclaimer._pre = pre;
-  const websiteLd = {
-    "@context": "https://schema.org", "@type": "WebSite", name: SITE.name,
-    url: SITE.origin + "/", description: SITE.tagline
-  };
-  meta.jsonld = [websiteLd].concat(meta.jsonld || []);
+  const url = SITE.origin + "/" + meta.url.replace(/index\\.html$/, "");
+  const websiteLd = meta.url === "index.html"
+    ? {
+      "@context": "https://schema.org", "@type": "WebSite",
+      "@id": SITE.origin + "/#website",
+      name: SITE.name, url: SITE.origin + "/",
+      description: SITE.tagline, inLanguage: "en-US",
+      publisher: { "@id": SITE.origin + "/#organization" }
+    }
+    : {
+      "@context": "https://schema.org", "@type": "WebPage",
+      "@id": url + "#webpage", name: meta.title,
+      url, description: meta.description, inLanguage: "en-US",
+      isPartOf: { "@id": SITE.origin + "/#website" }
+    };
+  const organizationLd = meta.url === "index.html"
+    ? [{ "@context": "https://schema.org", "@type": "Organization",
+      "@id": SITE.origin + "/#organization", name: SITE.name, url: SITE.origin + "/" }]
+    : [];
+  meta.jsonld = [websiteLd, ...organizationLd].concat(meta.jsonld || []);
   const html =
     head(meta, pre) +
     header(pre) +
@@ -491,6 +516,7 @@ module.exports = { run };
  *  PAGE DEFINITIONS
  * ===================================================================== */
 function run() {
+  generateSocialCard();
   buildHome();
   buildMapPages();
   buildComparePage();
