@@ -95,7 +95,10 @@ for(const file of htmlFiles){
     const resource=target==="/"?"index.html":target.endsWith("/")?
       target.slice(1)+"index.html":target.slice(1);
     assert.ok(exists(resource),file+" broken internal link "+raw);
-    if(target.endsWith("/") && canonicalPaths.has(target))linked.add(target);
+    // The site uses both /section/ and /section/index.html links.
+    // Both are real crawlable anchors to the same canonical page.
+    const route=target.endsWith("/index.html") ? target.slice(0,-"index.html".length) : target;
+    if(canonicalPaths.has(route))linked.add(route);
   }
   graph.set(pagePath,linked);
 }
