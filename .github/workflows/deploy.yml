@@ -74,6 +74,9 @@ jobs:
       - name: Validate generated pages and affordability math
         run: node scripts/test-quality.cjs
 
+      - name: Audit SEO, structured data and internal discoverability
+        run: node scripts/test-seo.cjs
+
       - name: Stage site
         run: |
           rm -rf _site && mkdir -p _site
