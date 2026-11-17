@@ -3,24 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Housing Affordability Atlas — Explore Where Housing May Still Be Affordable</title>
-<meta name="description" content="An interactive U.S. housing affordability map. Explore estimated home prices, monthly payments, and the income needed by state and place, then customize the math on Home Payment Atlas.">
+<title>U.S. Housing Affordability Map &amp; State Comparisons | Housing Atlas</title>
+<meta name="description" content="Explore a U.S. housing affordability map using Zillow home values and Census incomes. Compare states, mortgage-payment estimates, income needed and rental context.">
 <link rel="canonical" href="https://housingaffordabilityatlas.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Housing Affordability Atlas">
-<meta property="og:title" content="Housing Affordability Atlas — Explore Where Housing May Still Be Affordable">
-<meta property="og:description" content="An interactive U.S. housing affordability map. Explore estimated home prices, monthly payments, and the income needed by state and place, then customize the math on Home Payment Atlas.">
+<meta property="og:title" content="U.S. Housing Affordability Map &amp; State Comparisons | Housing Atlas">
+<meta property="og:description" content="Explore a U.S. housing affordability map using Zillow home values and Census incomes. Compare states, mortgage-payment estimates, income needed and rental context.">
 <meta property="og:url" content="https://housingaffordabilityatlas.com/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://housingaffordabilityatlas.com/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Housing Affordability Atlas name and decorative geographic tiles">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="U.S. Housing Affordability Map &amp; State Comparisons | Housing Atlas">
+<meta name="twitter:description" content="Explore a U.S. housing affordability map using Zillow home values and Census incomes. Compare states, mortgage-payment estimates, income needed and rental context.">
+<meta name="twitter:image" content="https://housingaffordabilityatlas.com/assets/og-card.png">
 <meta name="theme-color" content="#0f766e">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://homepaymentatlas.com">
 <link rel="stylesheet" href="assets/css/styles.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Housing Affordability Atlas","url":"https://housingaffordabilityatlas.com/","description":"Explore where housing may still be affordable."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://housingaffordabilityatlas.com/#website","name":"Housing Affordability Atlas","url":"https://housingaffordabilityatlas.com/","description":"Explore where housing may still be affordable.","inLanguage":"en-US","publisher":{"@id":"https://housingaffordabilityatlas.com/#organization"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://housingaffordabilityatlas.com/#organization","name":"Housing Affordability Atlas","url":"https://housingaffordabilityatlas.com/"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Housing Affordability Atlas","url":"https://housingaffordabilityatlas.com/","applicationCategory":"FinanceApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Explore where housing may still be affordable."}</script>
-<!-- Google AdSense loader (publisher ca-pub-3840656918521680). Enables AdSense site
-     verification and Auto Ads. Individual ad units stay as labeled placeholders
-     until you create units in AdSense and set their numeric slot IDs in ad(). -->
+<!-- Google AdSense account verification only. No empty manual ad placements are rendered. -->
 <meta name="google-adsense-account" content="ca-pub-3840656918521680">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3840656918521680" crossorigin="anonymous"></script>
 </head>
@@ -33,7 +41,9 @@
     </button>
     <nav class="primary-nav" id="primary-nav" data-nav aria-label="Primary">
       <a href="map/index.html">Map</a>
-      <a href="rankings/most-affordable-states/index.html">Rankings</a>
+      <a href="states/index.html">States</a>
+      <a href="compare/index.html">Compare</a>
+      <a href="rankings/index.html">Rankings</a>
       <a href="income/75000/index.html">By income</a>
       <a href="methodology/index.html">Methodology</a>
       <a href="about/index.html">About</a>
@@ -49,41 +59,37 @@
         run the detailed payment math.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="map/index.html">Open the affordability map</a>
-        <a class="btn" href="rankings/most-affordable-states/index.html">See most affordable states</a>
+        <a class="btn" href="compare/index.html">Compare two states</a>
+        <a class="btn btn-ghost" href="rankings/most-affordable-states/index.html">See state rankings</a>
       </div>
-      <p class="hero-flag">Built on Zillow Research home-value data, 2026-09 and U.S. Census ACS income. Estimates for comparison, not advice.</p>
+      <p class="hero-flag">Built on Zillow Research home-value data, 2026-10 and U.S. Census ACS income. Estimates for comparison, not advice.</p>
     </div>
   </section>
   <div class="wrap">
-    <aside class="ad-slot ad-horizontal" aria-label="Advertisement">
-  <span class="ad-label">Advertisement</span>
-  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
-  <ins class="adsbygoogle" style="display:block"
-       data-ad-client="ca-pub-3840656918521680"
-       data-ad-slot="1111111111"
-       data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  -->
-  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
-</aside>
+    
 
     <section class="section">
       <h2>A market-discovery map, not a listings site</h2>
       <p>Most housing sites show you individual listings. This one shows you the <em>landscape</em>:
         which states and markets are within reach for a given income, where rent eats the most of a
-        paycheck, and where starter homes are still attainable. Home values and rents come from
-        <strong>Zillow Research</strong> (ZHVI and ZORI); income and geography come from the
-        <strong>U.S. Census Bureau</strong>. When you find a market worth a closer look, continue to
+        paycheck, and where starter homes are still attainable. Home values come from <strong>Zillow Research</strong> (ZHVI), while rent is taken
+        from Census ACS median gross rent (ACS 5-year 2023); the Zillow ZORI fields are unavailable in this dataset. Household income and geography come from the
+        <strong>U.S. Census Bureau</strong>.  When you find a market worth a closer look, continue to
         <a href="https://homepaymentatlas.com/" rel="noopener">Home Payment Atlas</a> to customize down payment,
         taxes, PMI, insurance, and HOA.</p>
       <div class="feature-grid">
         <a class="feature" href="map/buying-affordability/index.html"><h3>Buying affordability</h3><p>How far an income stretches toward a median or starter home, by state.</p></a>
         <a class="feature" href="map/income-needed/index.html"><h3>Income needed</h3><p>The household income typically required to buy a mid-tier home.</p></a>
-        <a class="feature" href="map/rent-burden/index.html"><h3>Rent affordability</h3><p>Zillow rent as a share of income — where renting pressures budgets most.</p></a>
+        <a class="feature" href="map/rent-burden/index.html"><h3>Rent affordability</h3><p>Census ACS median gross rent divided by general median household income: an illustrative pressure proxy, not an official burden rate.</p></a>
         <a class="feature" href="rankings/most-affordable-starter-home-markets/index.html"><h3>Starter homes</h3><p>Markets where entry-level (bottom-tier) homes are most attainable.</p></a>
       </div>
     </section>
 
+    <section class="section feature-compare">
+      <div class="compare-promo"><div><p class="compare-label">An extra way to explore</p><h2>How far does your income go?</h2><p>Choose two states and use the same mortgage assumptions to compare a typical home, modeled monthly payment, annual income needed, and rate sensitivity. Unlike listings, this makes big geographic differences visible.</p></div>
+        <a class="btn btn-primary" href="compare/index.html">Open state comparison</a>
+      </div>
+    </section>
     <form class="map-controls" aria-label="Map controls" onsubmit="return false">
     <div class="control">
       <label for="ctl-income">Income level</label>
@@ -91,7 +97,7 @@
     </div>
     <div class="control control-wide">
       <label for="ctl-view">Map layer</label>
-      <select id="ctl-view" data-control="view"><optgroup label="Affordability (live data)"><option value="median-affordability">Median-home affordability</option><option value="starter-affordability">Starter-home affordability</option><option value="family-affordability">Family-home affordability (3BR)</option><option value="income-needed">Income needed</option><option value="monthly-payment">Estimated monthly payment</option><option value="rent-affordability">Rent affordability</option></optgroup><optgroup label="Market signals (data roadmap)"><option value="buyer-opportunity">Buyer opportunity (preview)</option><option value="market-heat">Market heat (preview)</option><option value="price-cut-share">Price-cut share (preview)</option></optgroup></select>
+      <select id="ctl-view" data-control="view"><optgroup label="Affordability (live data)"><option value="median-affordability">Median-home affordability</option><option value="starter-affordability">Starter-home affordability</option><option value="family-affordability">Family-home affordability (3BR)</option><option value="income-needed">Income needed</option><option value="monthly-payment">Estimated monthly payment</option><option value="rent-affordability">Rent affordability</option></optgroup></select>
     </div>
     <div class="control">
       <label for="ctl-custom">Custom home price (optional)</label>
@@ -111,116 +117,96 @@
       <section class="map-panel" data-map-panel aria-live="polite" aria-labelledby="panel-title" tabindex="-1">
         <p class="panel-hint">Select any state on the map to see estimated affordability, income needed, and a link to customize the payment on Home Payment Atlas.</p>
       </section>
-      <aside class="ad-slot ad-sidebar" aria-label="Advertisement">
-  <span class="ad-label">Advertisement</span>
-  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
-  <ins class="adsbygoogle" style="display:block"
-       data-ad-client="ca-pub-3840656918521680"
-       data-ad-slot="1111111111"
-       data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  -->
-  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
-</aside>
+      
     </div>
   </div>
-    <p class="source-strip">Sources — Home values &amp; rent: Zillow Research, 2026-09 · Income: U.S. Census ACS. Zillow does not endorse this site.</p>
+    <p class="source-strip">Sources — Home values: Zillow ZHVI, 2026-10 · Rent: Census ACS median gross rent (ACS 5-year 2023); the Zillow ZORI fields are unavailable in this dataset · Income: U.S. Census ACS 5-year 2023. Zillow does not endorse this site.</p>
 
     <section class="section">
-      <h2>Most affordable states to buy <span class="muted">(2026-09)</span></h2>
+      <h2>Most affordable states to buy <span class="muted">(2026-10)</span></h2>
       <p>Ranked by estimated buying-affordability score for a mid-tier home, combining Zillow home
         values with income context. Open a state for county and city detail, or change the controls
         above to explore starter homes, family homes, income needed, or rent.</p>
       <div class="table-wrap"><table class="data-table">
-    <caption class="table-caption">Median home affordability by state — Zillow ZHVI 2026-09, Census ACS income.</caption>
+    <caption class="table-caption">Median home affordability by state — Zillow ZHVI 2026-10, Census ACS income.</caption>
     <thead><tr><th scope="col">#</th><th scope="col">State</th><th scope="col">Est. home value</th>
     <th scope="col">Est. payment</th><th scope="col">Income needed</th><th scope="col">Score</th></tr></thead>
     <tbody><tr>
       <td>1</td>
       <td><a href="states/west-virginia/index.html">West Virginia</a></td>
-      <td>$176,576</td>
-      <td>$1,333</td>
-      <td>$57,129</td>
-      <td><span class="score-pill" data-band="s3">51</span></td>
+      <td>$175,778</td>
+      <td>$1,327</td>
+      <td>$56,871</td>
+      <td><span class="score-pill" data-band="s3">52</span></td>
     </tr><tr>
       <td>2</td>
       <td><a href="states/iowa/index.html">Iowa</a></td>
-      <td>$236,623</td>
-      <td>$1,786</td>
-      <td>$76,543</td>
-      <td><span class="score-pill" data-band="s3">46</span></td>
+      <td>$234,795</td>
+      <td>$1,773</td>
+      <td>$75,986</td>
+      <td><span class="score-pill" data-band="s3">47</span></td>
     </tr><tr>
       <td>3</td>
       <td><a href="states/kansas/index.html">Kansas</a></td>
-      <td>$246,055</td>
-      <td>$1,858</td>
-      <td>$79,629</td>
+      <td>$245,071</td>
+      <td>$1,850</td>
+      <td>$79,286</td>
       <td><span class="score-pill" data-band="s3">43</span></td>
     </tr><tr>
       <td>4</td>
       <td><a href="states/oklahoma/index.html">Oklahoma</a></td>
-      <td>$220,801</td>
-      <td>$1,667</td>
-      <td>$71,443</td>
+      <td>$219,842</td>
+      <td>$1,660</td>
+      <td>$71,143</td>
       <td><span class="score-pill" data-band="s3">41</span></td>
     </tr><tr>
       <td>5</td>
-      <td><a href="states/ohio/index.html">Ohio</a></td>
-      <td>$245,982</td>
-      <td>$1,857</td>
-      <td>$79,586</td>
+      <td><a href="states/louisiana/index.html">Louisiana</a></td>
+      <td>$212,191</td>
+      <td>$1,602</td>
+      <td>$68,657</td>
       <td><span class="score-pill" data-band="s3">40</span></td>
     </tr><tr>
       <td>6</td>
-      <td><a href="states/louisiana/index.html">Louisiana</a></td>
-      <td>$213,867</td>
-      <td>$1,615</td>
-      <td>$69,214</td>
-      <td><span class="score-pill" data-band="s2">39</span></td>
+      <td><a href="states/mississippi/index.html">Mississippi</a></td>
+      <td>$192,138</td>
+      <td>$1,450</td>
+      <td>$62,143</td>
+      <td><span class="score-pill" data-band="s3">40</span></td>
     </tr><tr>
       <td>7</td>
-      <td><a href="states/mississippi/index.html">Mississippi</a></td>
-      <td>$194,531</td>
-      <td>$1,469</td>
-      <td>$62,957</td>
-      <td><span class="score-pill" data-band="s2">39</span></td>
+      <td><a href="states/ohio/index.html">Ohio</a></td>
+      <td>$244,978</td>
+      <td>$1,849</td>
+      <td>$79,243</td>
+      <td><span class="score-pill" data-band="s3">40</span></td>
     </tr><tr>
       <td>8</td>
       <td><a href="states/illinois/index.html">Illinois</a></td>
-      <td>$295,943</td>
-      <td>$2,234</td>
-      <td>$95,743</td>
+      <td>$295,631</td>
+      <td>$2,232</td>
+      <td>$95,657</td>
       <td><span class="score-pill" data-band="s2">38</span></td>
     </tr><tr>
       <td>9</td>
       <td><a href="states/indiana/index.html">Indiana</a></td>
-      <td>$257,165</td>
-      <td>$1,941</td>
-      <td>$83,186</td>
+      <td>$256,138</td>
+      <td>$1,934</td>
+      <td>$82,886</td>
       <td><span class="score-pill" data-band="s2">37</span></td>
     </tr><tr>
       <td>10</td>
       <td><a href="states/kentucky/index.html">Kentucky</a></td>
-      <td>$230,909</td>
-      <td>$1,743</td>
-      <td>$74,700</td>
-      <td><span class="score-pill" data-band="s2">36</span></td>
+      <td>$228,639</td>
+      <td>$1,726</td>
+      <td>$73,971</td>
+      <td><span class="score-pill" data-band="s2">37</span></td>
     </tr></tbody>
   </table></div>
-      <p><a class="textlink" href="rankings/most-affordable-states/index.html">See the full state ranking →</a></p>
+      <p class="directory-cta"><a class="textlink" href="rankings/most-affordable-states/index.html">See all states by affordability rank →</a> <a class="textlink" href="states/index.html">Browse the 50-state and DC directory →</a></p>
     </section>
 
-    <aside class="ad-slot ad-incontent" aria-label="Advertisement">
-  <span class="ad-label">Advertisement</span>
-  <!-- AdSense unit. Replace data-ad-client and data-ad-slot, then uncomment.
-  <ins class="adsbygoogle" style="display:block"
-       data-ad-client="ca-pub-3840656918521680"
-       data-ad-slot="1111111111"
-       data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  -->
-  <div class="ad-placeholder" aria-hidden="true">Ad space</div>
-</aside>
+    
     <section class="cta-atlas" aria-labelledby="cta-h">
   <h2 id="cta-h">Customize this scenario</h2>
   <p>Want to adjust down payment, taxes, PMI, insurance, or HOA? Open this scenario in the
@@ -233,8 +219,8 @@
 </section>
     <section class="disclaimer" role="note">
   <h2>About these estimates &amp; data sources</h2>
-  <p>Home values and rents reflect Zillow Research data (ZHVI and ZORI, 2026-09). Household income reflects U.S. Census ACS data. All figures are estimates for general comparison, not appraisals or quotes — confirm details before relying on them.</p>
-  <p class="source-line">Home values and rent: Zillow Research (ZHVI, ZORI), 2026-09. Geography and FIPS codes: U.S. Census Bureau (Cartographic Boundary Files). Household income: U.S. Census ACS. Detailed payment math: Home Payment Atlas. Zillow does not endorse this site.</p>
+  <p>Home values are Zillow Research ZHVI (2026-10). Rent: Census ACS median gross rent (ACS 5-year 2023); the Zillow ZORI fields are unavailable in this dataset. Household income reflects U.S. Census ACS data. Rent relative to the general household median is a proxy, not the Census rent-cost-burden statistic for renter households. All payment figures are modeled planning estimates, not appraisals, quotes, or loan offers.</p>
+  <p class="source-line">Home values: Zillow Research ZHVI (2026-10). Rent: U.S. Census ACS 5-year median gross rent (ACS 5-year 2023). The rent-to-income figure is a proxy, not a Census renter-cost-burden statistic. Geography and FIPS codes: U.S. Census Bureau (Cartographic Boundary Files). Household income: U.S. Census ACS (ACS 5-year 2023). Detailed payment scenarios: Home Payment Atlas. Zillow does not endorse this site.</p>
   <p>Figures are educational estimates only and are <strong>not</strong> financial, legal, tax,
   mortgage, or real-estate advice, and not a loan offer. Verify every number with lenders, agents,
   tax authorities, and official sources. See our <a href="methodology/index.html">methodology</a>
@@ -243,15 +229,15 @@
   </div></main><footer class="site-footer">
   <div class="wrap foot-grid">
     <div class="foot-col"><h2>Maps</h2><ul><li><a href="map/index.html">Full affordability map</a></li><li><a href="map/buying-affordability/index.html">Buying affordability</a></li><li><a href="map/income-needed/index.html">Income needed</a></li><li><a href="map/rent-burden/index.html">Rent burden</a></li></ul></div>
-    <div class="foot-col"><h2>Rankings</h2><ul><li><a href="rankings/most-affordable-states/index.html">Most affordable states</a></li><li><a href="rankings/most-affordable-places-to-buy/index.html">Most affordable places</a></li><li><a href="rankings/lowest-income-needed/index.html">Lowest income needed</a></li><li><a href="rankings/best-places-for-first-time-buyers/index.html">First-time buyers</a></li></ul></div>
+    <div class="foot-col"><h2>Rankings</h2><ul><li><a href="rankings/index.html">All housing rankings</a></li><li><a href="rankings/most-affordable-states/index.html">Most affordable states</a></li><li><a href="rankings/most-affordable-places-to-buy/index.html">Most affordable places</a></li><li><a href="rankings/lowest-income-needed/index.html">Lowest income needed</a></li><li><a href="rankings/best-places-for-first-time-buyers/index.html">First-time buyers</a></li><li><a href="compare/index.html">Compare two states</a></li></ul></div>
     <div class="foot-col"><h2>By income</h2><ul><li><a href="income/50000/index.html">On $50,000</a></li><li><a href="income/75000/index.html">On $75,000</a></li><li><a href="income/100000/index.html">On $100,000</a></li><li><a href="income/150000/index.html">On $150,000</a></li></ul></div>
-    <div class="foot-col"><h2>States</h2><ul><li><a href="states/maryland/index.html">Maryland</a></li><li><a href="states/virginia/index.html">Virginia</a></li><li><a href="states/pennsylvania/index.html">Pennsylvania</a></li></ul></div>
-    <div class="foot-col"><h2>Site</h2><ul><li><a href="about/index.html">About</a></li><li><a href="methodology/index.html">Methodology</a></li><li><a href="privacy/index.html">Privacy</a></li><li><a href="terms/index.html">Terms & disclaimer</a></li></ul></div>
+    <div class="foot-col"><h2>States</h2><ul><li><a href="states/index.html">All 50 states + DC</a></li><li><a href="states/maryland/index.html">Maryland</a></li><li><a href="states/virginia/index.html">Virginia</a></li><li><a href="states/pennsylvania/index.html">Pennsylvania</a></li></ul></div>
+    <div class="foot-col"><h2>Site</h2><ul><li><a href="about/index.html">About</a></li><li><a href="methodology/index.html">Methodology</a></li><li><a href="privacy/index.html">Privacy</a></li><li><a href="terms/index.html">Terms & disclaimer</a></li><li><a href="data-updates/index.html">Data coverage and updates</a></li></ul></div>
   </div>
   <div class="wrap foot-base">
     <p class="foot-atlas">Detailed mortgage and payment math lives on our companion site,
       <a href="https://homepaymentatlas.com/" rel="noopener">Home Payment Atlas</a>.</p>
-    <p class="foot-atlas-src">Home values &amp; rent: Zillow Research. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
+    <p class="foot-atlas-src">Home values: Zillow Research ZHVI (2026-10). Rent: Census ACS median gross rent (ACS 5-year 2023); the Zillow ZORI fields are unavailable in this dataset. Income &amp; geography: U.S. Census Bureau. Zillow does not endorse this site.</p>
     <p class="foot-legal">&copy; <span data-year>2026</span> Housing Affordability Atlas. Educational estimates only — not financial, legal, tax, mortgage, or real-estate advice. Verify with official sources.</p>
   </div>
 </footer>
